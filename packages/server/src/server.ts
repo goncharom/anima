@@ -9,6 +9,9 @@ import { NodeExecutionEnv } from "@earendil-works/pi-durable/env/node";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
 import { CodingTools } from "@earendil-works/pi-durable/tools";
 import { BackgroundSubagents, SubagentsDoc } from "./extensions/subagents.ts";
+import { Routing } from "./extensions/routing.ts";
+
+export { routeInput, RoutingTask, type RoutingResult } from "./extensions/routing.ts";
 
 /** Open a SQLite-backed coding harness using OPENAI_API_KEY from the environment. */
 export async function createHarness() {
@@ -21,6 +24,7 @@ export async function createHarness() {
   const registry = createRegistry();
   registry.install(CodingTools);
   registry.install(BackgroundSubagents);
+  registry.install(Routing);
 
   const harness = await Harness.open(
     await openNodeSqliteStorage(databasePath),

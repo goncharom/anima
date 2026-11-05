@@ -1,5 +1,12 @@
 // Reports one conversation submission back to the conversation that requested it.
-import { AssistantEntry, defineTask, type ConversationId } from "@earendil-works/pi-durable";
+import {
+  AssistantEntry,
+  defineTask,
+  type ConversationId,
+  type EntryId,
+  type SubmissionId,
+  type TaskId,
+} from "@earendil-works/pi-durable";
 
 type ReporterInput = {
   conversationId: ConversationId;
@@ -7,8 +14,10 @@ type ReporterInput = {
   name?: string;
   requestId?: string;
   whenBusy?: "followUp" | "steer" | "reject";
+  inputEntryId?: EntryId;
+  routingTaskId?: TaskId;
 };
-type ReporterCheckpoint = { phase: "deliver" } | { phase: "report"; report?: string };
+type ReporterCheckpoint = { phase: "deliver" } | { phase: "report"; report?: string; submissionId?: SubmissionId };
 
 /** Submit or reattach to one input, then deliver its answer as a background follow-up. */
 export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint, null>({
@@ -42,18 +51,20 @@ export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint
           : `subagent ${JSON.stringify(task.input.name)}`;
         if (settled.status === "unanswered") {
           if (settled.reason !== "aborted") {
-            report = `[${source} failed: ${settled.reason}]${settled.detail ? `\n${settled.detail}` : ""}`;
+            report = `[${source} failed: ${settled.reason}]${settled.detail ? `\n${settled.detail}` : ""}` +
+              `\n\nInstruction:\n${task.input.message}`;
           }
         } else if (settled.type === "input") {
           const message = (await tx.entry(AssistantEntry, settled.answer))?.model?.[0];
           const text = message?.role === "assistant"
             ? message.content.flatMap((part) => part.type === "text" ? [part.text] : []).join("\n")
             : "";
-          report = `[${source} completed]\n${text || "Completed without a text response."}`;
+          report = `[${source} completed]\n\nInstruction answered:\n${task.input.message}` +
+            `\n\nResult:\n${text || "Completed without a text response."}`;
         }
         return {
           status: "running",
-          checkpoint: { phase: "report", ...(report === undefined ? {} : { report }) },
+          checkpoint: { phase: "report", submissionId: submission.id, ...(report === undefined ? {} : { report }) },
         };
       }, context);
     },
@@ -73,6 +84,11 @@ export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint
               visibility: "internal",
               sourceConversationId: String(task.input.conversationId),
               reporterTaskId: String(task.id),
+              ...(task.state.checkpoint.submissionId === undefined ? {} : {
+                sourceSubmissionId: String(task.state.checkpoint.submissionId),
+              }),
+              ...(task.input.inputEntryId === undefined ? {} : { inputEntryId: String(task.input.inputEntryId) }),
+              ...(task.input.routingTaskId === undefined ? {} : { routingTaskId: String(task.input.routingTaskId) }),
               ...(task.input.name === undefined ? {} : { sourceName: task.input.name }),
             },
           },
