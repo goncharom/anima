@@ -16,7 +16,7 @@ import { ConversationReporter, createReporter } from "./conversation-reporter.ts
 
 /** Extension references select by name; each harness installs its own codemode sandbox. */
 export const WorkerCapabilities = {
-  extensions: [CodingTools, { name: "codemode" }],
+  extensions: [CodingTools, { name: "codemode" }, { name: "mcp" }],
   tools: null,
 } satisfies AgentChange;
 
