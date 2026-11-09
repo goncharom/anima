@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package anima.v1;
+
+import "google/protobuf/struct.proto";
+
+// HarnessService exposes agent commands and a reconnectable snapshot stream.
+service HarnessService {
+  rpc GetRootConversation(GetRootConversationRequest) returns (GetRootConversationResponse);
+  rpc CreateConversation(CreateConversationRequest) returns (CreateConversationResponse);
+  rpc SubmitInput(SubmitInputRequest) returns (SubmitInputResponse);
+  rpc WatchConversation(WatchConversationRequest) returns (stream WatchConversationResponse);
+  rpc WatchTaskGraph(WatchTaskGraphRequest) returns (stream WatchTaskGraphResponse);
+  rpc WatchDocument(WatchDocumentRequest) returns (stream WatchDocumentResponse);
+  rpc AbortConversation(AbortConversationRequest) returns (AbortConversationResponse);
+  rpc GetEntries(GetEntriesRequest) returns (GetEntriesResponse);
+}
+
+// IDs are opaque strings, scoped to the server's database. They remain valid
+// across restarts using the same database; resetting it invalidates existing IDs.
+message CreateConversationRequest {
+  // Absent: use the server's working directory.
+  optional string cwd = 1;
+  optional string instructions = 2;
+}
+
+message CreateConversationResponse {
+  string conversation_id = 1;
+}
+
+// Resolve the main conversation without creating a new independent conversation.
+message GetRootConversationRequest {}
+
+message GetRootConversationResponse {
+  // The same root ID across reconnects/restarts using the same database.
+  string conversation_id = 1;
+}
+
+// What to do when the conversation already has an active run.
+enum BusyBehavior {
+  // Same as QUEUE.
+  BUSY_BEHAVIOR_UNSPECIFIED = 0;
+  BUSY_BEHAVIOR_QUEUE = 1;
+  BUSY_BEHAVIOR_STEER = 2;
+  BUSY_BEHAVIOR_REJECT = 3;
+}
+
+message SubmitInputRequest {
+  string conversation_id = 1;
+  string content = 2;
+  // Reusing a nonempty ID in this conversation does not send the input twice.
+  optional string request_id = 3;
+  // Root input always uses the router's steering policy. Otherwise unspecified
+  // means steer for root's subagents, or queue for ordinary conversations.
+  BusyBehavior when_busy = 4;
+}
+
+// Acknowledges acceptance, not completion. Observe state for progress and results.
+message SubmitInputResponse {
+  reserved 1, 2, 3;
+  reserved "submission_id", "routing_task_id", "reporter_task_id";
+}
+
+message WatchConversationRequest {
+  string conversation_id = 1;
+}
+
+message WatchConversationResponse {
+  ConversationSnapshot snapshot = 1;
+}
+
+// Each message replaces the previous snapshot. The first arrives immediately;
+// subsequent messages may coalesce changes. Disconnecting only stops the watch,
+// not the run. Reconnect to get current state; updates are not an event log.
+message ConversationSnapshot {
+  string conversation_id = 1;
+  // A bounded transcript window, oldest first. Each object is a complete Durable
+  // EntryRecord, preserving model content, tool results, and custom entry data.
+  repeated google.protobuf.Struct entries = 2;
+  // The entry immediately before the window; absent if there are no older entries.
+  optional string before_entry_id = 3;
+  // Built-in documents keyed by kind: pi.agent, pi.live, pi.inbox, pi.usage,
+  // and pi.provider. pi.live includes streamed generation and tool progress.
+  map<string, google.protobuf.Struct> docs = 4;
+}
+
+// Watch every live task in the harness, not just one conversation's foreground run.
+message WatchTaskGraphRequest {}
+
+message WatchTaskGraphResponse {
+  // A complete Durable TaskGraph: { tasks: { "<id>": TaskGraphNode } }.
+  // Nodes include kind, conversationId, owner, state, background, abortRequested,
+  // blocked, and owned conversations. Nested IDs keep their numeric representation.
+  // Terminal tasks leave the graph. This replaces the previous graph, not a delta.
+  google.protobuf.Struct graph = 1;
+}
+
+// Watch an existing conversation-scoped singleton document by its registered kind.
+// This is generic: built-in and application/extension documents use the same API.
+message WatchDocumentRequest {
+  string conversation_id = 1;
+  string kind = 2;
+}
+
+message WatchDocumentResponse {
+  // Initial value, then complete replacement values. Absent on retirement.
+  google.protobuf.Struct value = 1;
+  // Retirement sends one final response with this flag, then ends the stream.
+  // Reattaching requires the document to exist again. Missing documents/kinds
+  // return not_found; watching never creates a document.
+  bool retired = 2;
+}
+
+message AbortConversationRequest {
+  string conversation_id = 1;
+}
+
+// Returned once ordinary foreground work is idle. Background tasks may continue.
+message AbortConversationResponse {}
+
+message GetEntriesRequest {
+  string conversation_id = 1;
+  // Exclusive upper bound. Absent: return the newest page.
+  optional string before_entry_id = 2;
+  // Zero uses the server's default page size.
+  uint32 limit = 3;
+}
+
+message GetEntriesResponse {
+  // Complete Durable EntryRecords, oldest first, as in ConversationSnapshot.
+  repeated google.protobuf.Struct entries = 1;
+  // Pass this as before_entry_id to load the next older page. Absent at the start
+  // of history. This is an exclusive bound, unlike the snapshot's marker.
+  optional string next_before_entry_id = 2;
+}

@@ -1,0 +1,13 @@
+version: v2
+clean: true
+plugins:
+  - remote: buf.build/apple/swift:v1.39.0
+    out: ../protocol-swift/Sources/AnimaProtocol
+    opt:
+      - Visibility=Public
+  - remote: buf.build/connectrpc/swift:v1.2.3
+    out: ../protocol-swift/Sources/AnimaProtocol
+    opt:
+      - GenerateAsyncMethods=true
+      - GenerateCallbackMethods=false
+      - Visibility=Public

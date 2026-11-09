@@ -1,0 +1,19 @@
+{
+  "name": "@anima/protocol",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "generate": "pnpm run generate:ts",
+    "generate:ts": "buf generate",
+    "generate:swift": "buf generate --template buf.gen.swift.yaml",
+    "lint": "buf lint && buf format --diff --exit-code",
+    "check": "pnpm run lint"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "1.75.0",
+    "@bufbuild/protoc-gen-es": "2.16.0"
+  }
+}
