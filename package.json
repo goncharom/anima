@@ -4,6 +4,7 @@
   "scripts": {
     "start": "pnpm --filter @anima/server start",
     "start:server": "pnpm --filter @anima/server start:server",
+    "tui": "pnpm --filter @anima/tui start",
     "recreate-db": "pnpm --filter @anima/server start -- --force-recreate-db"
   },
   "packageManager": "pnpm@11.13.0"

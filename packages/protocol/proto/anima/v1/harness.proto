@@ -14,14 +14,21 @@ service HarnessService {
   rpc WatchDocument(WatchDocumentRequest) returns (stream WatchDocumentResponse);
   rpc AbortConversation(AbortConversationRequest) returns (AbortConversationResponse);
   rpc GetEntries(GetEntriesRequest) returns (GetEntriesResponse);
+  rpc WatchConversations(WatchConversationsRequest) returns (stream WatchConversationsResponse);
+  rpc UpdateConversation(UpdateConversationRequest) returns (UpdateConversationResponse);
+  rpc ListDirectories(ListDirectoriesRequest) returns (ListDirectoriesResponse);
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
+  rpc UpdateQueuedInput(UpdateQueuedInputRequest) returns (UpdateQueuedInputResponse);
+  rpc ForkConversation(ForkConversationRequest) returns (ForkConversationResponse);
 }
 
 // IDs are opaque strings, scoped to the server's database. They remain valid
 // across restarts using the same database; resetting it invalidates existing IDs.
 message CreateConversationRequest {
-  // Absent: use the server's working directory.
+  // Absent: use the root conversation's working directory.
   optional string cwd = 1;
   optional string instructions = 2;
+  optional string name = 3;
 }
 
 message CreateConversationResponse {
@@ -38,7 +45,7 @@ message GetRootConversationResponse {
 
 // What to do when the conversation already has an active run.
 enum BusyBehavior {
-  // Same as QUEUE.
+  // Use the server's default for the recipient (see SubmitInputRequest).
   BUSY_BEHAVIOR_UNSPECIFIED = 0;
   BUSY_BEHAVIOR_QUEUE = 1;
   BUSY_BEHAVIOR_STEER = 2;
@@ -50,8 +57,8 @@ message SubmitInputRequest {
   string content = 2;
   // Reusing a nonempty ID in this conversation does not send the input twice.
   optional string request_id = 3;
-  // Root input always uses the router's steering policy. Otherwise unspecified
-  // means steer for root's subagents, or queue for ordinary conversations.
+  // Unspecified means steer for root/routed input and root's subagents, or queue
+  // for ordinary conversations. An explicit mode also applies after routing.
   BusyBehavior when_busy = 4;
 }
 
@@ -82,6 +89,8 @@ message ConversationSnapshot {
   // Built-in documents keyed by kind: pi.agent, pi.live, pi.inbox, pi.usage,
   // and pi.provider. pi.live includes streamed generation and tool progress.
   map<string, google.protobuf.Struct> docs = 4;
+  // Derived server-side values, not cumulative token/spend totals.
+  ConversationStatus status = 5;
 }
 
 // Watch every live task in the harness, not just one conversation's foreground run.
@@ -132,4 +141,112 @@ message GetEntriesResponse {
   // Pass this as before_entry_id to load the next older page. Absent at the start
   // of history. This is an exclusive bound, unlike the snapshot's marker.
   optional string next_before_entry_id = 2;
+}
+
+message ModelRef {
+  string provider = 1;
+  string model_id = 2;
+}
+
+message ConversationStatus {
+  string cwd = 1;
+  ModelRef model = 2;
+  optional string git_branch = 3;
+  uint32 context_tokens = 4;
+  // Zero when the model is unknown. Context usage is approximate.
+  uint32 context_window = 5;
+}
+
+// Display metadata only. Archive does not cancel or delete a conversation.
+message ConversationInfo {
+  string conversation_id = 1;
+  string name = 2;
+  bool archived = 3;
+  optional string parent_conversation_id = 4;
+  optional string fork_entry_id = 5;
+  optional string owner_conversation_id = 6;
+}
+
+message WatchConversationsRequest {}
+
+message WatchConversationsResponse {
+  // Complete replacement directory, including archived conversations.
+  repeated ConversationInfo conversations = 1;
+}
+
+message UpdateConversationRequest {
+  string conversation_id = 1;
+  optional string name = 2;
+  // Root cannot be archived.
+  optional bool archived = 3;
+  // Requires idle execution with no queued/pending delivery. Does not move files.
+  optional string cwd = 4;
+  // Applies to subsequent model requests.
+  ModelRef model = 5;
+}
+
+message UpdateConversationResponse {}
+
+message ListDirectoriesRequest {
+  // Empty means the server's working directory; ~ means its home directory.
+  string path = 1;
+  // Best-effort filesystem pagination; reset when changing paths.
+  uint32 offset = 2;
+}
+
+message Directory {
+  string name = 1;
+  string path = 2;
+}
+
+message ListDirectoriesResponse {
+  string path = 1;
+  string parent = 2;
+  repeated Directory directories = 3;
+  optional uint32 next_offset = 4;
+}
+
+message ModelInfo {
+  ModelRef model = 1;
+  string name = 2;
+  uint32 context_window = 3;
+  bool reasoning = 4;
+}
+
+message ListModelsRequest {}
+
+message ListModelsResponse {
+  repeated ModelInfo models = 1;
+}
+
+message UpdateQueuedInputRequest {
+  string conversation_id = 1;
+  // Taken from pi.inbox, not a task ID. Only queued user text is editable.
+  string submission_id = 2;
+  // Compare-and-set: reject if consumed or edited by another client.
+  string expected_content = 3;
+  BusyBehavior expected_mode = 4;
+  optional string content = 5;
+  // Only QUEUE and STEER are accepted.
+  optional BusyBehavior when_busy = 6;
+  bool remove = 7;
+}
+
+message UpdateQueuedInputResponse {
+  // Exact updated/withdrawn content, for restoring withdrawn text to the editor.
+  string content = 1;
+  BusyBehavior when_busy = 2;
+}
+
+message ForkConversationRequest {
+  string conversation_id = 1;
+  // Inclusive visible entry: inherit history through here. Absent creates an empty
+  // independent branch using the source's current agent preferences.
+  optional string entry_id = 2;
+  optional string name = 3;
+  optional string cwd = 4;
+}
+
+message ForkConversationResponse {
+  string conversation_id = 1;
 }

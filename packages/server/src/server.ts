@@ -8,7 +8,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
 import type { Context } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
-import { createModels } from "@earendil-works/pi-ai/models";
+import { createModels, type Models } from "@earendil-works/pi-ai/models";
 import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
 import { CodemodeSandbox } from "@earendil-works/pi-codemode";
 import {
@@ -28,6 +28,7 @@ import {
   type EntryId,
   type EntryRecord,
   type JsonObject as DurableJsonObject,
+  type Tx,
   type WatchEnd,
   type WatchHandle,
 } from "@earendil-works/pi-durable";
@@ -39,6 +40,10 @@ import { BackgroundSubagents, CoordinatorTools, SubagentsDoc, WorkerCapabilities
 import { createReporter, InputRequests } from "./extensions/conversation-reporter.ts";
 import { routeInput, Routing } from "./extensions/routing.ts";
 import { openMcp } from "./extensions/mcp.ts";
+import {
+  abortConversation, backfillConversations, conversationStatus, ConversationsDoc, directoryPath,
+  displayName, listDirectories, registerConversation, updateConversation, updateQueuedInput,
+} from "./extensions/conversations.ts";
 
 export { routeInput, RoutingTask, type RoutingResult } from "./extensions/routing.ts";
 export { SubagentsDoc };
@@ -95,6 +100,7 @@ export async function createHarness() {
       settings: { steeringMode: "all" },
       conversationCreated: async (tx, conversation) => {
         await tx.doc(SubagentsDoc, conversation.id);
+        await registerConversation(tx, conversation);
       },
       env: ({ cwd }) => new NodeExecutionEnv({ cwd: cwd ?? process.cwd() }),
     },
@@ -116,26 +122,23 @@ export async function createHarness() {
       thinkingLevel: "high",
       cwd: process.cwd(),
     },
+    init: async (tx, id) => { (await tx.doc(ConversationsDoc)).conversations[String(id)].name = "Chief of staff"; },
   }).catch(startupFailed);
   // root({ agent }) initializes only NEW roots. Reapply policy to persisted sessions before resume,
   // without resetting history, changing their chosen model/cwd, or aborting existing submissions.
   await root.commit(async (tx) => {
     const agents = await tx.doc(SubagentsDoc, root.id);
-    const inbox = await tx.doc(InboxDoc, root.id);
     const children = [];
     for (const agent of Object.values(agents.agents)) {
       if (await tx.conversation(agent.conversationId)) children.push(agent.conversationId);
     }
+    await backfillConversations(tx, root.id, new Map(Object.values(agents.agents).map(agent => [agent.conversationId, agent.name])));
     await configure(tx, root.id, {
       extensions: [BackgroundSubagents, Routing],
       tools: CoordinatorTools,
       modelTools: null,
       instructions: "",
     });
-    // Preserve queued user input from older builds, but make it visible at the next tool boundary.
-    for (const item of inbox.items) {
-      if (item.mode === "followUp" && item.entry?.kind === "anima.routed-message") item.mode = "steer";
-    }
     for (const id of children) {
       await configure(tx, id, WorkerCapabilities);
     }
@@ -162,7 +165,7 @@ export async function createHarness() {
     } while (cursor !== undefined);
   }, BACKGROUND_CONTEXT).catch(startupFailed);
 
-  return { harness, root };
+  return { harness, root, models };
 }
 
 /** Shared user-input policy. Internal agent messages still use Conversation.submit directly. */
@@ -176,7 +179,7 @@ export async function submitInput(
   if (!content.trim()) throw new Error("Input must not be empty");
   const root = await harness.root(context);
   if (conversation.id === root.id) {
-    return routeInput(harness, content, context, options.requestId);
+    return routeInput(harness, content, context, options.requestId, options.whenBusy);
   }
   const directory = await harness.snapshot(SubagentsDoc, root.id, context);
   const agent = Object.values(directory?.agents ?? {}).find((agent) => agent.conversationId === conversation.id);
@@ -187,11 +190,13 @@ export async function submitInput(
         ? await tx.doc(InputRequests, conversation.id, options.requestId, null) : undefined;
       if (receipt?.taskId !== undefined) return;
       // Decide reject at admission, not later when the background delivery runs.
-      if (options.whenBusy === "reject" && (await tx.doc(LiveDoc, conversation.id)).run !== undefined) {
+      if (options.whenBusy === "reject" && ((await tx.doc(LiveDoc, conversation.id)).run !== undefined
+        || (await tx.doc(InboxDoc, conversation.id)).items.length > 0)) {
         throw new ConversationBusy(conversation.id);
       }
+      const name = (await tx.doc(ConversationsDoc)).conversations[String(conversation.id)]?.name ?? agent.name;
       const id = await createReporter(tx, {
-        conversationId: conversation.id, name: agent.name, message: content,
+        conversationId: conversation.id, name, message: content,
         requestId: options.requestId || undefined,
         whenBusy: options.whenBusy === "reject" ? "followUp" : options.whenBusy,
         entry: { kind: "anima.user-message", data: { origin: "user" } },
@@ -205,8 +210,10 @@ export async function submitInput(
 }
 
 /** Start a loopback Connect server, taking ownership of its harness until close(). */
-export async function startServer(harness?: Harness, options: { port?: number } = {}) {
-  const runtime = harness ?? (await createHarness()).harness;
+export async function startServer(harness?: Harness, options: { port?: number; models?: Models } = {}) {
+  const opened = harness ? { harness, models: options.models } : await createHarness();
+  const runtime = opened.harness;
+  const models = opened.models;
   const shutdown = new AbortController();
   const server = createHttpServer(connectNodeAdapter({
     shutdownSignal: shutdown.signal,
@@ -220,15 +227,21 @@ export async function startServer(harness?: Harness, options: { port?: number } 
         async createConversation(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
           const defaults = await (await runtime.root(context)).agent(context);
+          const cwd = await directoryPath(request.cwd ?? defaults.cwd ?? process.cwd(), context);
+          const name = request.name === undefined ? undefined : displayName(request.name);
           const conversation = await runtime.createConversation({
             ownership: { kind: "ownerless" },
             agent: {
               model: defaults.model,
               thinkingLevel: defaults.thinkingLevel,
-              cwd: request.cwd ?? defaults.cwd ?? process.cwd(),
+              cwd,
               ...WorkerCapabilities,
               modelTools: null,
               instructions: request.instructions ?? "You are an independent coding assistant.",
+            },
+            init: async (tx, id) => {
+              const info = await registerConversation(tx, { id });
+              if (name !== undefined) info.name = name;
             },
           }, context);
           return { conversationId: String(conversation.id) };
@@ -255,7 +268,7 @@ export async function startServer(harness?: Harness, options: { port?: number } 
         async *watchConversation(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
           const conversation = await requireConversation(runtime, request.conversationId, context);
-          yield* watchConversation(conversation, context);
+          yield* watchConversation(conversation, models, context);
         },
         async *watchTaskGraph(_request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
@@ -284,8 +297,76 @@ export async function startServer(harness?: Harness, options: { port?: number } 
         async abortConversation(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
           const conversation = await requireConversation(runtime, request.conversationId, context);
-          await conversation.abort(context);
+          await abortConversation(runtime, conversation, context);
           return {};
+        },
+        async *watchConversations(_request, rpc) {
+          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
+          const watch = await runtime.watchDoc(ConversationsDoc, context);
+          if (!watch) throw new ConnectError("Conversation directory is unavailable", Code.FailedPrecondition);
+          for await (const directory of watchValues(watch)) {
+            if (directory) yield { conversations: Object.values(directory.conversations) };
+          }
+        },
+        async updateConversation(request, rpc) {
+          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
+          const conversation = await requireConversation(runtime, request.conversationId, context);
+          const root = await runtime.root(context);
+          await updateConversation(conversation, root.id, request, models, context);
+          return {};
+        },
+        async listDirectories(request, rpc) {
+          return listDirectories(request.path, request.offset, withAbortSignal(rpc.signal, BACKGROUND_CONTEXT));
+        },
+        async listModels(_request, rpc) {
+          if (!models) throw new ConnectError("The server model catalog is unavailable", Code.FailedPrecondition);
+          const available = await models.getAvailableOfType("chat", undefined, { signal: rpc.signal });
+          return { models: available.map(model => ({
+            model: { provider: model.provider, modelId: model.id }, name: model.name,
+            contextWindow: model.contextWindow, reasoning: model.reasoning,
+          })) };
+        },
+        async updateQueuedInput(request, rpc) {
+          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
+          parseId(request.submissionId);
+          const conversation = await requireConversation(runtime, request.conversationId, context);
+          return updateQueuedInput(conversation, request, context);
+        },
+        async forkConversation(request, rpc) {
+          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
+          const source = await requireConversation(runtime, request.conversationId, context);
+          const at = request.entryId === undefined ? undefined : parseId<EntryId>(request.entryId);
+          if (at !== undefined && !(await source.entries({ minEntryId: at, maxEntryId: at }, 1, undefined, context)).items.length) {
+            throw new ConnectError("Fork entry is not visible in this conversation", Code.InvalidArgument);
+          }
+          const cwd = request.cwd === undefined ? undefined : await directoryPath(request.cwd, context);
+          const directory = await runtime.snapshot(ConversationsDoc, context);
+          const info = directory?.conversations[request.conversationId];
+          const name = displayName(request.name ?? `${(info?.name ?? "Conversation").slice(0, 180)} (fork)`);
+          const root = await runtime.root(context);
+          const preferences = at === undefined ? await source.agent(context) : undefined;
+          const options = {
+            ownership: { kind: "ownerless" } as const,
+            agent: {
+              ...(preferences ? {
+                model: preferences.model, thinkingLevel: preferences.thinkingLevel,
+                cwd: preferences.cwd, instructions: preferences.instructions,
+              } : {}),
+              // Normal history forks retain native as-of tool restrictions and loaded tools.
+              ...(at === undefined || source.id === root.id ? { ...WorkerCapabilities, modelTools: null } : {}),
+              ...(cwd === undefined ? {} : { cwd }),
+              ...(source.id === root.id || info?.ownerConversationId ? { instructions: "You are an independent coding assistant." } : {}),
+            },
+            init: async (tx: Tx, id: ConversationId) => {
+              const info = await registerConversation(tx, {
+                id, ...(at === undefined ? {} : { parent: { conversationId: source.id, at } }),
+              });
+              info.name = name;
+            },
+          };
+          const conversation = at === undefined
+            ? await runtime.createConversation(options, context) : await source.fork(at, options, context);
+          return { conversationId: String(conversation.id) };
         },
         async getEntries(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
@@ -307,6 +388,12 @@ export async function startServer(harness?: Harness, options: { port?: number } 
   }));
 
   try {
+    if (harness) {
+      const root = await runtime.root(BACKGROUND_CONTEXT);
+      const agents = await runtime.snapshot(SubagentsDoc, root.id, BACKGROUND_CONTEXT);
+      await root.commit(tx => backfillConversations(tx, root.id,
+        new Map(Object.values(agents?.agents ?? {}).map(agent => [agent.conversationId, agent.name]))), BACKGROUND_CONTEXT);
+    }
     await new Promise<void>((resolve, reject) => {
       server.once("error", reject);
       server.listen(options.port ?? 4242, "127.0.0.1", () => {
@@ -399,7 +486,7 @@ function jsonObject(value: object): JsonObject {
 }
 
 /** Bridge Durable state watches to bounded replacement streams, not an event queue. */
-async function* watchValues<T>(watch: WatchHandle<T>) {
+async function* watchValues<T>(watch: WatchHandle<T>, refreshMs?: number) {
   let pending: { value: T } | undefined = { value: watch.value };
   let ended: WatchEnd | undefined;
   let wake = Promise.withResolvers<void>();
@@ -407,6 +494,12 @@ async function* watchValues<T>(watch: WatchHandle<T>) {
     pending = { value };
     wake.resolve();
   });
+  // Refresh derived Git status while idle, only while a client is attached.
+  const timer = refreshMs === undefined ? undefined : setInterval(() => {
+    pending ??= { value: watch.value };
+    wake.resolve();
+  }, refreshMs);
+  timer?.unref();
   void watch.closed.then((end) => {
     ended = end;
     wake.resolve();
@@ -428,22 +521,27 @@ async function* watchValues<T>(watch: WatchHandle<T>) {
       }
     }
   } finally {
+    clearInterval(timer);
     await watch.stop();
   }
 }
 
 /** Stream raw transcript history together with the UI's conversation documents. */
-async function* watchConversation(conversation: Conversation, context: Context) {
-  for await (const view of watchValues(await conversation.watch(context))) {
+async function* watchConversation(conversation: Conversation, models: Models | undefined, context: Context) {
+  const status = conversationStatus(conversation, models);
+  let cached: { newest: number; page: Awaited<ReturnType<typeof historyPage>> } | undefined;
+  for await (const view of watchValues(await conversation.watch(context), 5_000)) {
     // Durable's view is active model context; include raw routing receipts and history too.
     const newest = view.entries.reduce((id, entry) => Math.max(id, entry.id), 0);
-    const page = await historyPage(conversation, newest, 50, context);
+    if (cached?.newest !== newest) cached = { newest, page: await historyPage(conversation, newest, 50, context) };
+    const page = cached.page;
     yield {
       snapshot: create(ConversationSnapshotSchema, {
         conversationId: String(conversation.id),
         entries: page.entries.map(jsonObject),
         beforeEntryId: page.before === undefined ? undefined : String(page.before),
         docs: Object.fromEntries(Object.entries(view.docs).map(([kind, value]) => [kind, jsonObject(value)])),
+        status: await status(newest, context),
       }),
     };
   }

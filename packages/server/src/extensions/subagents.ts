@@ -13,6 +13,7 @@ import {
 } from "@earendil-works/pi-durable";
 import { CodingTools } from "@earendil-works/pi-durable/tools";
 import { ConversationReporter, createReporter } from "./conversation-reporter.ts";
+import { ConversationsDoc, displayName, registerConversation } from "./conversations.ts";
 
 /** Extension references select by name; each harness installs its own codemode sandbox. */
 export const WorkerCapabilities = {
@@ -77,12 +78,14 @@ const subagent = defineTool({
   }),
   replay: "safe",
   execute: async ({ name, message }, api, context) => {
+    name = displayName(name);
     const conversationId = await api.commit(async (tx) => {
       const launch = await tx.doc(Launch, api.taskId);
       if (launch.conversationId !== undefined) return launch.conversationId;
 
       const anchor = await tx.createTask(Anchor, null, { ownership: { kind: "conversation" }, background: true });
       const child = await tx.createConversation({ ownership: { kind: "task", taskId: anchor } });
+      (await registerConversation(tx, child)).name = name;
       await configure(tx, child.id, {
         thinkingLevel: "high",
         ...WorkerCapabilities,
@@ -129,8 +132,9 @@ const sendMessage = defineTool({
       if (agent === undefined) throw new Error("Destination is not one of your subagents");
       const requestId = `subagent-message:${api.taskId}`;
       if (launch.reporterTaskId !== undefined) return launch.reporterTaskId;
+      const name = (await tx.doc(ConversationsDoc)).conversations[String(agent.conversationId)]?.name ?? agent.name;
       const reporter = await createReporter(tx, {
-        name: agent.name, conversationId: agent.conversationId, message, requestId,
+        name, conversationId: agent.conversationId, message, requestId,
       });
       launch.reporterTaskId = reporter;
       return reporter;

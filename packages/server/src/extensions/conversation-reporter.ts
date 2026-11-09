@@ -65,6 +65,12 @@ export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint
       }, context);
       const settled = await submission.wait(context);
       await runtime.commit(async (tx) => {
+        // A queued input may have been edited in place. Report what was actually delivered.
+        const delivered = settled.entry === undefined ? undefined : await tx.entry(settled.entry);
+        const input = delivered?.model?.find(message => message.role === "user");
+        const instruction = input?.role === "user"
+          ? typeof input.content === "string" ? input.content : input.content.flatMap(part => part.type === "text" ? [part.text] : []).join("\n")
+          : task.input.message;
         let report: string | undefined;
         const source = task.input.name === undefined
           ? `conversation ${task.input.conversationId}`
@@ -72,14 +78,14 @@ export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint
         if (settled.status === "unanswered") {
           if (settled.reason !== "aborted") {
             report = `[${source} failed: ${settled.reason}]${settled.detail ? `\n${settled.detail}` : ""}` +
-              `\n\nInstruction:\n${task.input.message}`;
+              `\n\nInstruction:\n${instruction}`;
           }
         } else if (settled.type === "input") {
           const message = (await tx.entry(AssistantEntry, settled.answer))?.model?.[0];
           const text = message?.role === "assistant"
             ? message.content.flatMap((part) => part.type === "text" ? [part.text] : []).join("\n")
             : "";
-          report = `[${source} completed]\n\nInstruction answered:\n${task.input.message}` +
+          report = `[${source} completed]\n\nInstruction answered:\n${instruction}` +
             `\n\nResult:\n${text || "Completed without a text response."}`;
         }
         if (task.input.routingTaskId !== undefined) {

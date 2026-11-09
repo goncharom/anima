@@ -11,7 +11,7 @@ import type { JsonObject, Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file anima/v1/harness.proto.
  */
 export const file_anima_v1_harness: GenFile = /*@__PURE__*/
-  fileDesc("ChZhbmltYS92MS9oYXJuZXNzLnByb3RvEghhbmltYS52MSJhChlDcmVhdGVDb252ZXJzYXRpb25SZXF1ZXN0EhAKA2N3ZBgBIAEoCUgAiAEBEhkKDGluc3RydWN0aW9ucxgCIAEoCUgBiAEBQgYKBF9jd2RCDwoNX2luc3RydWN0aW9ucyI1ChpDcmVhdGVDb252ZXJzYXRpb25SZXNwb25zZRIXCg9jb252ZXJzYXRpb25faWQYASABKAkiHAoaR2V0Um9vdENvbnZlcnNhdGlvblJlcXVlc3QiNgobR2V0Um9vdENvbnZlcnNhdGlvblJlc3BvbnNlEhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSKRAQoSU3VibWl0SW5wdXRSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIPCgdjb250ZW50GAIgASgJEhcKCnJlcXVlc3RfaWQYAyABKAlIAIgBARIpCgl3aGVuX2J1c3kYBCABKA4yFi5hbmltYS52MS5CdXN5QmVoYXZpb3JCDQoLX3JlcXVlc3RfaWQiWQoTU3VibWl0SW5wdXRSZXNwb25zZUoECAEQAkoECAIQA0oECAMQBFINc3VibWlzc2lvbl9pZFIPcm91dGluZ190YXNrX2lkUhByZXBvcnRlcl90YXNrX2lkIjMKGFdhdGNoQ29udmVyc2F0aW9uUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkiTQoZV2F0Y2hDb252ZXJzYXRpb25SZXNwb25zZRIwCghzbmFwc2hvdBgBIAEoCzIeLmFuaW1hLnYxLkNvbnZlcnNhdGlvblNuYXBzaG90IokCChRDb252ZXJzYXRpb25TbmFwc2hvdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSKAoHZW50cmllcxgCIAMoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3QSHAoPYmVmb3JlX2VudHJ5X2lkGAMgASgJSACIAQESNgoEZG9jcxgEIAMoCzIoLmFuaW1hLnYxLkNvbnZlcnNhdGlvblNuYXBzaG90LkRvY3NFbnRyeRpECglEb2NzRW50cnkSCwoDa2V5GAEgASgJEiYKBXZhbHVlGAIgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdDoCOAFCEgoQX2JlZm9yZV9lbnRyeV9pZCIXChVXYXRjaFRhc2tHcmFwaFJlcXVlc3QiQAoWV2F0Y2hUYXNrR3JhcGhSZXNwb25zZRImCgVncmFwaBgBIAEoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3QiPQoUV2F0Y2hEb2N1bWVudFJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEgwKBGtpbmQYAiABKAkiUAoVV2F0Y2hEb2N1bWVudFJlc3BvbnNlEiYKBXZhbHVlGAEgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdBIPCgdyZXRpcmVkGAIgASgIIjMKGEFib3J0Q29udmVyc2F0aW9uUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkiGwoZQWJvcnRDb252ZXJzYXRpb25SZXNwb25zZSJtChFHZXRFbnRyaWVzUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSHAoPYmVmb3JlX2VudHJ5X2lkGAIgASgJSACIAQESDQoFbGltaXQYAyABKA1CEgoQX2JlZm9yZV9lbnRyeV9pZCJ6ChJHZXRFbnRyaWVzUmVzcG9uc2USKAoHZW50cmllcxgBIAMoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3QSIQoUbmV4dF9iZWZvcmVfZW50cnlfaWQYAiABKAlIAIgBAUIXChVfbmV4dF9iZWZvcmVfZW50cnlfaWQqeQoMQnVzeUJlaGF2aW9yEh0KGUJVU1lfQkVIQVZJT1JfVU5TUEVDSUZJRUQQABIXChNCVVNZX0JFSEFWSU9SX1FVRVVFEAESFwoTQlVTWV9CRUhBVklPUl9TVEVFUhACEhgKFEJVU1lfQkVIQVZJT1JfUkVKRUNUEAMy0wUKDkhhcm5lc3NTZXJ2aWNlEmIKE0dldFJvb3RDb252ZXJzYXRpb24SJC5hbmltYS52MS5HZXRSb290Q29udmVyc2F0aW9uUmVxdWVzdBolLmFuaW1hLnYxLkdldFJvb3RDb252ZXJzYXRpb25SZXNwb25zZRJfChJDcmVhdGVDb252ZXJzYXRpb24SIy5hbmltYS52MS5DcmVhdGVDb252ZXJzYXRpb25SZXF1ZXN0GiQuYW5pbWEudjEuQ3JlYXRlQ29udmVyc2F0aW9uUmVzcG9uc2USSgoLU3VibWl0SW5wdXQSHC5hbmltYS52MS5TdWJtaXRJbnB1dFJlcXVlc3QaHS5hbmltYS52MS5TdWJtaXRJbnB1dFJlc3BvbnNlEl4KEVdhdGNoQ29udmVyc2F0aW9uEiIuYW5pbWEudjEuV2F0Y2hDb252ZXJzYXRpb25SZXF1ZXN0GiMuYW5pbWEudjEuV2F0Y2hDb252ZXJzYXRpb25SZXNwb25zZTABElUKDldhdGNoVGFza0dyYXBoEh8uYW5pbWEudjEuV2F0Y2hUYXNrR3JhcGhSZXF1ZXN0GiAuYW5pbWEudjEuV2F0Y2hUYXNrR3JhcGhSZXNwb25zZTABElIKDVdhdGNoRG9jdW1lbnQSHi5hbmltYS52MS5XYXRjaERvY3VtZW50UmVxdWVzdBofLmFuaW1hLnYxLldhdGNoRG9jdW1lbnRSZXNwb25zZTABElwKEUFib3J0Q29udmVyc2F0aW9uEiIuYW5pbWEudjEuQWJvcnRDb252ZXJzYXRpb25SZXF1ZXN0GiMuYW5pbWEudjEuQWJvcnRDb252ZXJzYXRpb25SZXNwb25zZRJHCgpHZXRFbnRyaWVzEhsuYW5pbWEudjEuR2V0RW50cmllc1JlcXVlc3QaHC5hbmltYS52MS5HZXRFbnRyaWVzUmVzcG9uc2ViBnByb3RvMw", [file_google_protobuf_struct]);
+  fileDesc("ChZhbmltYS92MS9oYXJuZXNzLnByb3RvEghhbmltYS52MSJ9ChlDcmVhdGVDb252ZXJzYXRpb25SZXF1ZXN0EhAKA2N3ZBgBIAEoCUgAiAEBEhkKDGluc3RydWN0aW9ucxgCIAEoCUgBiAEBEhEKBG5hbWUYAyABKAlIAogBAUIGCgRfY3dkQg8KDV9pbnN0cnVjdGlvbnNCBwoFX25hbWUiNQoaQ3JlYXRlQ29udmVyc2F0aW9uUmVzcG9uc2USFwoPY29udmVyc2F0aW9uX2lkGAEgASgJIhwKGkdldFJvb3RDb252ZXJzYXRpb25SZXF1ZXN0IjYKG0dldFJvb3RDb252ZXJzYXRpb25SZXNwb25zZRIXCg9jb252ZXJzYXRpb25faWQYASABKAkikQEKElN1Ym1pdElucHV0UmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSDwoHY29udGVudBgCIAEoCRIXCgpyZXF1ZXN0X2lkGAMgASgJSACIAQESKQoJd2hlbl9idXN5GAQgASgOMhYuYW5pbWEudjEuQnVzeUJlaGF2aW9yQg0KC19yZXF1ZXN0X2lkIlkKE1N1Ym1pdElucHV0UmVzcG9uc2VKBAgBEAJKBAgCEANKBAgDEARSDXN1Ym1pc3Npb25faWRSD3JvdXRpbmdfdGFza19pZFIQcmVwb3J0ZXJfdGFza19pZCIzChhXYXRjaENvbnZlcnNhdGlvblJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJIk0KGVdhdGNoQ29udmVyc2F0aW9uUmVzcG9uc2USMAoIc25hcHNob3QYASABKAsyHi5hbmltYS52MS5Db252ZXJzYXRpb25TbmFwc2hvdCK3AgoUQ29udmVyc2F0aW9uU25hcHNob3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEigKB2VudHJpZXMYAiADKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0EhwKD2JlZm9yZV9lbnRyeV9pZBgDIAEoCUgAiAEBEjYKBGRvY3MYBCADKAsyKC5hbmltYS52MS5Db252ZXJzYXRpb25TbmFwc2hvdC5Eb2NzRW50cnkSLAoGc3RhdHVzGAUgASgLMhwuYW5pbWEudjEuQ29udmVyc2F0aW9uU3RhdHVzGkQKCURvY3NFbnRyeRILCgNrZXkYASABKAkSJgoFdmFsdWUYAiABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0OgI4AUISChBfYmVmb3JlX2VudHJ5X2lkIhcKFVdhdGNoVGFza0dyYXBoUmVxdWVzdCJAChZXYXRjaFRhc2tHcmFwaFJlc3BvbnNlEiYKBWdyYXBoGAEgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdCI9ChRXYXRjaERvY3VtZW50UmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSDAoEa2luZBgCIAEoCSJQChVXYXRjaERvY3VtZW50UmVzcG9uc2USJgoFdmFsdWUYASABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0Eg8KB3JldGlyZWQYAiABKAgiMwoYQWJvcnRDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSIbChlBYm9ydENvbnZlcnNhdGlvblJlc3BvbnNlIm0KEUdldEVudHJpZXNSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIcCg9iZWZvcmVfZW50cnlfaWQYAiABKAlIAIgBARINCgVsaW1pdBgDIAEoDUISChBfYmVmb3JlX2VudHJ5X2lkInoKEkdldEVudHJpZXNSZXNwb25zZRIoCgdlbnRyaWVzGAEgAygLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdBIhChRuZXh0X2JlZm9yZV9lbnRyeV9pZBgCIAEoCUgAiAEBQhcKFV9uZXh0X2JlZm9yZV9lbnRyeV9pZCIuCghNb2RlbFJlZhIQCghwcm92aWRlchgBIAEoCRIQCghtb2RlbF9pZBgCIAEoCSKcAQoSQ29udmVyc2F0aW9uU3RhdHVzEgsKA2N3ZBgBIAEoCRIhCgVtb2RlbBgCIAEoCzISLmFuaW1hLnYxLk1vZGVsUmVmEhcKCmdpdF9icmFuY2gYAyABKAlIAIgBARIWCg5jb250ZXh0X3Rva2VucxgEIAEoDRIWCg5jb250ZXh0X3dpbmRvdxgFIAEoDUINCgtfZ2l0X2JyYW5jaCL3AQoQQ29udmVyc2F0aW9uSW5mbxIXCg9jb252ZXJzYXRpb25faWQYASABKAkSDAoEbmFtZRgCIAEoCRIQCghhcmNoaXZlZBgDIAEoCBIjChZwYXJlbnRfY29udmVyc2F0aW9uX2lkGAQgASgJSACIAQESGgoNZm9ya19lbnRyeV9pZBgFIAEoCUgBiAEBEiIKFW93bmVyX2NvbnZlcnNhdGlvbl9pZBgGIAEoCUgCiAEBQhkKF19wYXJlbnRfY29udmVyc2F0aW9uX2lkQhAKDl9mb3JrX2VudHJ5X2lkQhgKFl9vd25lcl9jb252ZXJzYXRpb25faWQiGwoZV2F0Y2hDb252ZXJzYXRpb25zUmVxdWVzdCJPChpXYXRjaENvbnZlcnNhdGlvbnNSZXNwb25zZRIxCg1jb252ZXJzYXRpb25zGAEgAygLMhouYW5pbWEudjEuQ29udmVyc2F0aW9uSW5mbyKxAQoZVXBkYXRlQ29udmVyc2F0aW9uUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSEQoEbmFtZRgCIAEoCUgAiAEBEhUKCGFyY2hpdmVkGAMgASgISAGIAQESEAoDY3dkGAQgASgJSAKIAQESIQoFbW9kZWwYBSABKAsyEi5hbmltYS52MS5Nb2RlbFJlZkIHCgVfbmFtZUILCglfYXJjaGl2ZWRCBgoEX2N3ZCIcChpVcGRhdGVDb252ZXJzYXRpb25SZXNwb25zZSI2ChZMaXN0RGlyZWN0b3JpZXNSZXF1ZXN0EgwKBHBhdGgYASABKAkSDgoGb2Zmc2V0GAIgASgNIicKCURpcmVjdG9yeRIMCgRuYW1lGAEgASgJEgwKBHBhdGgYAiABKAkiiwEKF0xpc3REaXJlY3Rvcmllc1Jlc3BvbnNlEgwKBHBhdGgYASABKAkSDgoGcGFyZW50GAIgASgJEigKC2RpcmVjdG9yaWVzGAMgAygLMhMuYW5pbWEudjEuRGlyZWN0b3J5EhgKC25leHRfb2Zmc2V0GAQgASgNSACIAQFCDgoMX25leHRfb2Zmc2V0ImcKCU1vZGVsSW5mbxIhCgVtb2RlbBgBIAEoCzISLmFuaW1hLnYxLk1vZGVsUmVmEgwKBG5hbWUYAiABKAkSFgoOY29udGV4dF93aW5kb3cYAyABKA0SEQoJcmVhc29uaW5nGAQgASgIIhMKEUxpc3RNb2RlbHNSZXF1ZXN0IjkKEkxpc3RNb2RlbHNSZXNwb25zZRIjCgZtb2RlbHMYASADKAsyEy5hbmltYS52MS5Nb2RlbEluZm8igwIKGFVwZGF0ZVF1ZXVlZElucHV0UmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSFQoNc3VibWlzc2lvbl9pZBgCIAEoCRIYChBleHBlY3RlZF9jb250ZW50GAMgASgJEi0KDWV4cGVjdGVkX21vZGUYBCABKA4yFi5hbmltYS52MS5CdXN5QmVoYXZpb3ISFAoHY29udGVudBgFIAEoCUgAiAEBEi4KCXdoZW5fYnVzeRgGIAEoDjIWLmFuaW1hLnYxLkJ1c3lCZWhhdmlvckgBiAEBEg4KBnJlbW92ZRgHIAEoCEIKCghfY29udGVudEIMCgpfd2hlbl9idXN5IlcKGVVwZGF0ZVF1ZXVlZElucHV0UmVzcG9uc2USDwoHY29udGVudBgBIAEoCRIpCgl3aGVuX2J1c3kYAiABKA4yFi5hbmltYS52MS5CdXN5QmVoYXZpb3IijAEKF0ZvcmtDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIVCghlbnRyeV9pZBgCIAEoCUgAiAEBEhEKBG5hbWUYAyABKAlIAYgBARIQCgNjd2QYBCABKAlIAogBAUILCglfZW50cnlfaWRCBwoFX25hbWVCBgoEX2N3ZCIzChhGb3JrQ29udmVyc2F0aW9uUmVzcG9uc2USFwoPY29udmVyc2F0aW9uX2lkGAEgASgJKnkKDEJ1c3lCZWhhdmlvchIdChlCVVNZX0JFSEFWSU9SX1VOU1BFQ0lGSUVEEAASFwoTQlVTWV9CRUhBVklPUl9RVUVVRRABEhcKE0JVU1lfQkVIQVZJT1JfU1RFRVIQAhIYChRCVVNZX0JFSEFWSU9SX1JFSkVDVBADMvEJCg5IYXJuZXNzU2VydmljZRJiChNHZXRSb290Q29udmVyc2F0aW9uEiQuYW5pbWEudjEuR2V0Um9vdENvbnZlcnNhdGlvblJlcXVlc3QaJS5hbmltYS52MS5HZXRSb290Q29udmVyc2F0aW9uUmVzcG9uc2USXwoSQ3JlYXRlQ29udmVyc2F0aW9uEiMuYW5pbWEudjEuQ3JlYXRlQ29udmVyc2F0aW9uUmVxdWVzdBokLmFuaW1hLnYxLkNyZWF0ZUNvbnZlcnNhdGlvblJlc3BvbnNlEkoKC1N1Ym1pdElucHV0EhwuYW5pbWEudjEuU3VibWl0SW5wdXRSZXF1ZXN0Gh0uYW5pbWEudjEuU3VibWl0SW5wdXRSZXNwb25zZRJeChFXYXRjaENvbnZlcnNhdGlvbhIiLmFuaW1hLnYxLldhdGNoQ29udmVyc2F0aW9uUmVxdWVzdBojLmFuaW1hLnYxLldhdGNoQ29udmVyc2F0aW9uUmVzcG9uc2UwARJVCg5XYXRjaFRhc2tHcmFwaBIfLmFuaW1hLnYxLldhdGNoVGFza0dyYXBoUmVxdWVzdBogLmFuaW1hLnYxLldhdGNoVGFza0dyYXBoUmVzcG9uc2UwARJSCg1XYXRjaERvY3VtZW50Eh4uYW5pbWEudjEuV2F0Y2hEb2N1bWVudFJlcXVlc3QaHy5hbmltYS52MS5XYXRjaERvY3VtZW50UmVzcG9uc2UwARJcChFBYm9ydENvbnZlcnNhdGlvbhIiLmFuaW1hLnYxLkFib3J0Q29udmVyc2F0aW9uUmVxdWVzdBojLmFuaW1hLnYxLkFib3J0Q29udmVyc2F0aW9uUmVzcG9uc2USRwoKR2V0RW50cmllcxIbLmFuaW1hLnYxLkdldEVudHJpZXNSZXF1ZXN0GhwuYW5pbWEudjEuR2V0RW50cmllc1Jlc3BvbnNlEmEKEldhdGNoQ29udmVyc2F0aW9ucxIjLmFuaW1hLnYxLldhdGNoQ29udmVyc2F0aW9uc1JlcXVlc3QaJC5hbmltYS52MS5XYXRjaENvbnZlcnNhdGlvbnNSZXNwb25zZTABEl8KElVwZGF0ZUNvbnZlcnNhdGlvbhIjLmFuaW1hLnYxLlVwZGF0ZUNvbnZlcnNhdGlvblJlcXVlc3QaJC5hbmltYS52MS5VcGRhdGVDb252ZXJzYXRpb25SZXNwb25zZRJWCg9MaXN0RGlyZWN0b3JpZXMSIC5hbmltYS52MS5MaXN0RGlyZWN0b3JpZXNSZXF1ZXN0GiEuYW5pbWEudjEuTGlzdERpcmVjdG9yaWVzUmVzcG9uc2USRwoKTGlzdE1vZGVscxIbLmFuaW1hLnYxLkxpc3RNb2RlbHNSZXF1ZXN0GhwuYW5pbWEudjEuTGlzdE1vZGVsc1Jlc3BvbnNlElwKEVVwZGF0ZVF1ZXVlZElucHV0EiIuYW5pbWEudjEuVXBkYXRlUXVldWVkSW5wdXRSZXF1ZXN0GiMuYW5pbWEudjEuVXBkYXRlUXVldWVkSW5wdXRSZXNwb25zZRJZChBGb3JrQ29udmVyc2F0aW9uEiEuYW5pbWEudjEuRm9ya0NvbnZlcnNhdGlvblJlcXVlc3QaIi5hbmltYS52MS5Gb3JrQ29udmVyc2F0aW9uUmVzcG9uc2ViBnByb3RvMw", [file_google_protobuf_struct]);
 
 /**
  * IDs are opaque strings, scoped to the server's database. They remain valid
@@ -21,7 +21,7 @@ export const file_anima_v1_harness: GenFile = /*@__PURE__*/
  */
 export type CreateConversationRequest = Message<"anima.v1.CreateConversationRequest"> & {
   /**
-   * Absent: use the server's working directory.
+   * Absent: use the root conversation's working directory.
    *
    * @generated from field: optional string cwd = 1;
    */
@@ -31,6 +31,11 @@ export type CreateConversationRequest = Message<"anima.v1.CreateConversationRequ
    * @generated from field: optional string instructions = 2;
    */
   instructions?: string | undefined;
+
+  /**
+   * @generated from field: optional string name = 3;
+   */
+  name?: string | undefined;
 };
 
 /**
@@ -113,8 +118,8 @@ export type SubmitInputRequest = Message<"anima.v1.SubmitInputRequest"> & {
   requestId?: string | undefined;
 
   /**
-   * Root input always uses the router's steering policy. Otherwise unspecified
-   * means steer for root's subagents, or queue for ordinary conversations.
+   * Unspecified means steer for root/routed input and root's subagents, or queue
+   * for ordinary conversations. An explicit mode also applies after routing.
    *
    * @generated from field: anima.v1.BusyBehavior when_busy = 4;
    */
@@ -212,6 +217,13 @@ export type ConversationSnapshot = Message<"anima.v1.ConversationSnapshot"> & {
    * @generated from field: map<string, google.protobuf.Struct> docs = 4;
    */
   docs: { [key: string]: JsonObject };
+
+  /**
+   * Derived server-side values, not cumulative token/spend totals.
+   *
+   * @generated from field: anima.v1.ConversationStatus status = 5;
+   */
+  status?: ConversationStatus | undefined;
 };
 
 /**
@@ -402,13 +414,477 @@ export const GetEntriesResponseSchema: GenMessage<GetEntriesResponse> = /*@__PUR
   messageDesc(file_anima_v1_harness, 16);
 
 /**
+ * @generated from message anima.v1.ModelRef
+ */
+export type ModelRef = Message<"anima.v1.ModelRef"> & {
+  /**
+   * @generated from field: string provider = 1;
+   */
+  provider: string;
+
+  /**
+   * @generated from field: string model_id = 2;
+   */
+  modelId: string;
+};
+
+/**
+ * Describes the message anima.v1.ModelRef.
+ * Use `create(ModelRefSchema)` to create a new message.
+ */
+export const ModelRefSchema: GenMessage<ModelRef> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 17);
+
+/**
+ * @generated from message anima.v1.ConversationStatus
+ */
+export type ConversationStatus = Message<"anima.v1.ConversationStatus"> & {
+  /**
+   * @generated from field: string cwd = 1;
+   */
+  cwd: string;
+
+  /**
+   * @generated from field: anima.v1.ModelRef model = 2;
+   */
+  model?: ModelRef | undefined;
+
+  /**
+   * @generated from field: optional string git_branch = 3;
+   */
+  gitBranch?: string | undefined;
+
+  /**
+   * @generated from field: uint32 context_tokens = 4;
+   */
+  contextTokens: number;
+
+  /**
+   * Zero when the model is unknown. Context usage is approximate.
+   *
+   * @generated from field: uint32 context_window = 5;
+   */
+  contextWindow: number;
+};
+
+/**
+ * Describes the message anima.v1.ConversationStatus.
+ * Use `create(ConversationStatusSchema)` to create a new message.
+ */
+export const ConversationStatusSchema: GenMessage<ConversationStatus> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 18);
+
+/**
+ * Display metadata only. Archive does not cancel or delete a conversation.
+ *
+ * @generated from message anima.v1.ConversationInfo
+ */
+export type ConversationInfo = Message<"anima.v1.ConversationInfo"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: bool archived = 3;
+   */
+  archived: boolean;
+
+  /**
+   * @generated from field: optional string parent_conversation_id = 4;
+   */
+  parentConversationId?: string | undefined;
+
+  /**
+   * @generated from field: optional string fork_entry_id = 5;
+   */
+  forkEntryId?: string | undefined;
+
+  /**
+   * @generated from field: optional string owner_conversation_id = 6;
+   */
+  ownerConversationId?: string | undefined;
+};
+
+/**
+ * Describes the message anima.v1.ConversationInfo.
+ * Use `create(ConversationInfoSchema)` to create a new message.
+ */
+export const ConversationInfoSchema: GenMessage<ConversationInfo> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 19);
+
+/**
+ * @generated from message anima.v1.WatchConversationsRequest
+ */
+export type WatchConversationsRequest = Message<"anima.v1.WatchConversationsRequest"> & {
+};
+
+/**
+ * Describes the message anima.v1.WatchConversationsRequest.
+ * Use `create(WatchConversationsRequestSchema)` to create a new message.
+ */
+export const WatchConversationsRequestSchema: GenMessage<WatchConversationsRequest> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 20);
+
+/**
+ * @generated from message anima.v1.WatchConversationsResponse
+ */
+export type WatchConversationsResponse = Message<"anima.v1.WatchConversationsResponse"> & {
+  /**
+   * Complete replacement directory, including archived conversations.
+   *
+   * @generated from field: repeated anima.v1.ConversationInfo conversations = 1;
+   */
+  conversations: ConversationInfo[];
+};
+
+/**
+ * Describes the message anima.v1.WatchConversationsResponse.
+ * Use `create(WatchConversationsResponseSchema)` to create a new message.
+ */
+export const WatchConversationsResponseSchema: GenMessage<WatchConversationsResponse> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 21);
+
+/**
+ * @generated from message anima.v1.UpdateConversationRequest
+ */
+export type UpdateConversationRequest = Message<"anima.v1.UpdateConversationRequest"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * @generated from field: optional string name = 2;
+   */
+  name?: string | undefined;
+
+  /**
+   * Root cannot be archived.
+   *
+   * @generated from field: optional bool archived = 3;
+   */
+  archived?: boolean | undefined;
+
+  /**
+   * Requires idle execution with no queued/pending delivery. Does not move files.
+   *
+   * @generated from field: optional string cwd = 4;
+   */
+  cwd?: string | undefined;
+
+  /**
+   * Applies to subsequent model requests.
+   *
+   * @generated from field: anima.v1.ModelRef model = 5;
+   */
+  model?: ModelRef | undefined;
+};
+
+/**
+ * Describes the message anima.v1.UpdateConversationRequest.
+ * Use `create(UpdateConversationRequestSchema)` to create a new message.
+ */
+export const UpdateConversationRequestSchema: GenMessage<UpdateConversationRequest> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 22);
+
+/**
+ * @generated from message anima.v1.UpdateConversationResponse
+ */
+export type UpdateConversationResponse = Message<"anima.v1.UpdateConversationResponse"> & {
+};
+
+/**
+ * Describes the message anima.v1.UpdateConversationResponse.
+ * Use `create(UpdateConversationResponseSchema)` to create a new message.
+ */
+export const UpdateConversationResponseSchema: GenMessage<UpdateConversationResponse> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 23);
+
+/**
+ * @generated from message anima.v1.ListDirectoriesRequest
+ */
+export type ListDirectoriesRequest = Message<"anima.v1.ListDirectoriesRequest"> & {
+  /**
+   * Empty means the server's working directory; ~ means its home directory.
+   *
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * Best-effort filesystem pagination; reset when changing paths.
+   *
+   * @generated from field: uint32 offset = 2;
+   */
+  offset: number;
+};
+
+/**
+ * Describes the message anima.v1.ListDirectoriesRequest.
+ * Use `create(ListDirectoriesRequestSchema)` to create a new message.
+ */
+export const ListDirectoriesRequestSchema: GenMessage<ListDirectoriesRequest> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 24);
+
+/**
+ * @generated from message anima.v1.Directory
+ */
+export type Directory = Message<"anima.v1.Directory"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string path = 2;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message anima.v1.Directory.
+ * Use `create(DirectorySchema)` to create a new message.
+ */
+export const DirectorySchema: GenMessage<Directory> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 25);
+
+/**
+ * @generated from message anima.v1.ListDirectoriesResponse
+ */
+export type ListDirectoriesResponse = Message<"anima.v1.ListDirectoriesResponse"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string parent = 2;
+   */
+  parent: string;
+
+  /**
+   * @generated from field: repeated anima.v1.Directory directories = 3;
+   */
+  directories: Directory[];
+
+  /**
+   * @generated from field: optional uint32 next_offset = 4;
+   */
+  nextOffset?: number | undefined;
+};
+
+/**
+ * Describes the message anima.v1.ListDirectoriesResponse.
+ * Use `create(ListDirectoriesResponseSchema)` to create a new message.
+ */
+export const ListDirectoriesResponseSchema: GenMessage<ListDirectoriesResponse> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 26);
+
+/**
+ * @generated from message anima.v1.ModelInfo
+ */
+export type ModelInfo = Message<"anima.v1.ModelInfo"> & {
+  /**
+   * @generated from field: anima.v1.ModelRef model = 1;
+   */
+  model?: ModelRef | undefined;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: uint32 context_window = 3;
+   */
+  contextWindow: number;
+
+  /**
+   * @generated from field: bool reasoning = 4;
+   */
+  reasoning: boolean;
+};
+
+/**
+ * Describes the message anima.v1.ModelInfo.
+ * Use `create(ModelInfoSchema)` to create a new message.
+ */
+export const ModelInfoSchema: GenMessage<ModelInfo> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 27);
+
+/**
+ * @generated from message anima.v1.ListModelsRequest
+ */
+export type ListModelsRequest = Message<"anima.v1.ListModelsRequest"> & {
+};
+
+/**
+ * Describes the message anima.v1.ListModelsRequest.
+ * Use `create(ListModelsRequestSchema)` to create a new message.
+ */
+export const ListModelsRequestSchema: GenMessage<ListModelsRequest> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 28);
+
+/**
+ * @generated from message anima.v1.ListModelsResponse
+ */
+export type ListModelsResponse = Message<"anima.v1.ListModelsResponse"> & {
+  /**
+   * @generated from field: repeated anima.v1.ModelInfo models = 1;
+   */
+  models: ModelInfo[];
+};
+
+/**
+ * Describes the message anima.v1.ListModelsResponse.
+ * Use `create(ListModelsResponseSchema)` to create a new message.
+ */
+export const ListModelsResponseSchema: GenMessage<ListModelsResponse> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 29);
+
+/**
+ * @generated from message anima.v1.UpdateQueuedInputRequest
+ */
+export type UpdateQueuedInputRequest = Message<"anima.v1.UpdateQueuedInputRequest"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * Taken from pi.inbox, not a task ID. Only queued user text is editable.
+   *
+   * @generated from field: string submission_id = 2;
+   */
+  submissionId: string;
+
+  /**
+   * Compare-and-set: reject if consumed or edited by another client.
+   *
+   * @generated from field: string expected_content = 3;
+   */
+  expectedContent: string;
+
+  /**
+   * @generated from field: anima.v1.BusyBehavior expected_mode = 4;
+   */
+  expectedMode: BusyBehavior;
+
+  /**
+   * @generated from field: optional string content = 5;
+   */
+  content?: string | undefined;
+
+  /**
+   * Only QUEUE and STEER are accepted.
+   *
+   * @generated from field: optional anima.v1.BusyBehavior when_busy = 6;
+   */
+  whenBusy?: BusyBehavior | undefined;
+
+  /**
+   * @generated from field: bool remove = 7;
+   */
+  remove: boolean;
+};
+
+/**
+ * Describes the message anima.v1.UpdateQueuedInputRequest.
+ * Use `create(UpdateQueuedInputRequestSchema)` to create a new message.
+ */
+export const UpdateQueuedInputRequestSchema: GenMessage<UpdateQueuedInputRequest> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 30);
+
+/**
+ * @generated from message anima.v1.UpdateQueuedInputResponse
+ */
+export type UpdateQueuedInputResponse = Message<"anima.v1.UpdateQueuedInputResponse"> & {
+  /**
+   * Exact updated/withdrawn content, for restoring withdrawn text to the editor.
+   *
+   * @generated from field: string content = 1;
+   */
+  content: string;
+
+  /**
+   * @generated from field: anima.v1.BusyBehavior when_busy = 2;
+   */
+  whenBusy: BusyBehavior;
+};
+
+/**
+ * Describes the message anima.v1.UpdateQueuedInputResponse.
+ * Use `create(UpdateQueuedInputResponseSchema)` to create a new message.
+ */
+export const UpdateQueuedInputResponseSchema: GenMessage<UpdateQueuedInputResponse> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 31);
+
+/**
+ * @generated from message anima.v1.ForkConversationRequest
+ */
+export type ForkConversationRequest = Message<"anima.v1.ForkConversationRequest"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * Inclusive visible entry: inherit history through here. Absent creates an empty
+   * independent branch using the source's current agent preferences.
+   *
+   * @generated from field: optional string entry_id = 2;
+   */
+  entryId?: string | undefined;
+
+  /**
+   * @generated from field: optional string name = 3;
+   */
+  name?: string | undefined;
+
+  /**
+   * @generated from field: optional string cwd = 4;
+   */
+  cwd?: string | undefined;
+};
+
+/**
+ * Describes the message anima.v1.ForkConversationRequest.
+ * Use `create(ForkConversationRequestSchema)` to create a new message.
+ */
+export const ForkConversationRequestSchema: GenMessage<ForkConversationRequest> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 32);
+
+/**
+ * @generated from message anima.v1.ForkConversationResponse
+ */
+export type ForkConversationResponse = Message<"anima.v1.ForkConversationResponse"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+};
+
+/**
+ * Describes the message anima.v1.ForkConversationResponse.
+ * Use `create(ForkConversationResponseSchema)` to create a new message.
+ */
+export const ForkConversationResponseSchema: GenMessage<ForkConversationResponse> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 33);
+
+/**
  * What to do when the conversation already has an active run.
  *
  * @generated from enum anima.v1.BusyBehavior
  */
 export const BusyBehavior = {
   /**
-   * Same as QUEUE.
+   * Use the server's default for the recipient (see SubmitInputRequest).
    *
    * @generated from enum value: BUSY_BEHAVIOR_UNSPECIFIED = 0;
    */
@@ -512,6 +988,54 @@ export const HarnessService: GenService<{
     methodKind: "unary";
     input: typeof GetEntriesRequestSchema;
     output: typeof GetEntriesResponseSchema;
+  },
+  /**
+   * @generated from rpc anima.v1.HarnessService.WatchConversations
+   */
+  watchConversations: {
+    methodKind: "server_streaming";
+    input: typeof WatchConversationsRequestSchema;
+    output: typeof WatchConversationsResponseSchema;
+  },
+  /**
+   * @generated from rpc anima.v1.HarnessService.UpdateConversation
+   */
+  updateConversation: {
+    methodKind: "unary";
+    input: typeof UpdateConversationRequestSchema;
+    output: typeof UpdateConversationResponseSchema;
+  },
+  /**
+   * @generated from rpc anima.v1.HarnessService.ListDirectories
+   */
+  listDirectories: {
+    methodKind: "unary";
+    input: typeof ListDirectoriesRequestSchema;
+    output: typeof ListDirectoriesResponseSchema;
+  },
+  /**
+   * @generated from rpc anima.v1.HarnessService.ListModels
+   */
+  listModels: {
+    methodKind: "unary";
+    input: typeof ListModelsRequestSchema;
+    output: typeof ListModelsResponseSchema;
+  },
+  /**
+   * @generated from rpc anima.v1.HarnessService.UpdateQueuedInput
+   */
+  updateQueuedInput: {
+    methodKind: "unary";
+    input: typeof UpdateQueuedInputRequestSchema;
+    output: typeof UpdateQueuedInputResponseSchema;
+  },
+  /**
+   * @generated from rpc anima.v1.HarnessService.ForkConversation
+   */
+  forkConversation: {
+    methodKind: "unary";
+    input: typeof ForkConversationRequestSchema;
+    output: typeof ForkConversationResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_anima_v1_harness, 0);

@@ -4,6 +4,7 @@ import type { ClassifierResult } from "@earendil-works/pi-ai";
 import {
   defineExtension,
   defineTask,
+  ConversationBusy,
   InboxDoc,
   LiveDoc,
   type ConversationId,
@@ -15,6 +16,7 @@ import {
 } from "@earendil-works/pi-durable";
 import { ConversationReporter, createReporter, InputRequests } from "./conversation-reporter.ts";
 import { SubagentsDoc } from "./subagents.ts";
+import { ConversationsDoc } from "./conversations.ts";
 
 type DialogueMessage = {
   entryId: EntryId;
@@ -59,6 +61,7 @@ type RoutingInput = {
   recentDialogue: DialogueMessage[];
   workers: Worker[];
   recentWorkerEvents?: WorkerEvent[];
+  whenBusy?: "followUp" | "steer" | "reject";
 };
 
 type Decision = {
@@ -74,17 +77,21 @@ export type RoutingResult = Decision & {
   submissionId: SubmissionId;
   reporterTaskId?: TaskId;
   deliveryStatus?: "queued" | "placed" | "done" | "unanswered";
-  whenBusy?: "steer";
+  whenBusy?: "followUp" | "steer" | "reject";
 };
 
 /** Persist a context snapshot and start routing without invoking the root model. */
-export async function routeInput(harness: Harness, content: string, context: Context, requestId?: string): Promise<void> {
+export async function routeInput(
+  harness: Harness, content: string, context: Context, requestId?: string,
+  whenBusy?: "followUp" | "steer" | "reject",
+): Promise<void> {
   if (!content.trim()) throw new Error("Input must not be empty");
   const root = await harness.root(context);
   await root.commit(async (tx) => {
     const receipt = requestId ? await tx.doc(InputRequests, root.id, requestId, null) : undefined;
     if (receipt?.taskId !== undefined) return;
     const agents = await tx.doc(SubagentsDoc, root.id);
+    const metadata = await tx.doc(ConversationsDoc);
     const history = await tx.scanEntries({ conversationId: root.id }, 100);
     // Reporter inputs retain send_message instructions even before delivery reaches the worker inbox.
     const reporters = await tx.scanTasks({
@@ -153,8 +160,13 @@ export async function routeInput(harness: Harness, content: string, context: Con
         String(record(task.input).conversationId) === String(agent.conversationId)).slice(0, 2);
       for (const task of recentReporters) {
         const data = record(task.input);
+        const submission = await tx.submissionByRequest(agent.conversationId,
+          typeof data.requestId === "string" ? data.requestId : `subagent:${task.id}`);
+        const queued = submission && inbox.items.find(item => item.id === submission.id && item.mode !== "write");
+        const delivered = submission?.entry === undefined ? undefined : await tx.entry(submission.entry);
+        const instruction = queued && queued.mode !== "write" ? queued.content : delivered?.model?.[0]?.content ?? data.message;
         addInstruction({ source: task.id === agent.reporterTaskId ? "delegation" : "follow_up",
-          taskId: String(task.id), status: task.state.status, content: text(data.message, 1200),
+          taskId: String(task.id), status: task.state.status, content: text(instruction, 1200),
           ...(typeof data.inputEntryId === "number" || typeof data.inputEntryId === "string"
             ? { sourceEntryId: String(data.inputEntryId) } : {}),
         });
@@ -172,7 +184,7 @@ export async function routeInput(harness: Harness, content: string, context: Con
       }
       workers.push({
         conversationId: agent.conversationId,
-        name: agent.name.slice(0, 128),
+        name: (metadata.conversations[String(agent.conversationId)]?.name ?? agent.name).slice(0, 128),
         assignment: assignment.slice(0, 4000),
         busy: live.run !== undefined,
         queuedInputs: inbox.items.filter((item) => item.mode !== "write").length,
@@ -183,7 +195,10 @@ export async function routeInput(harness: Harness, content: string, context: Con
     // A display-only entry records the user's input without starting a root generation.
     // All context reads precede these table writes, so this briefing is one consistent snapshot.
     const entry = await tx.appendEntry(root.id, { kind: "anima.routing-input", data: { content, origin: "user" } });
-    const id = await tx.createTask(RoutingTask, { content, entryId: entry.id, recentDialogue, workers, recentWorkerEvents }, {
+    const id = await tx.createTask(RoutingTask, {
+      content, entryId: entry.id, recentDialogue, workers, recentWorkerEvents,
+      ...(whenBusy === undefined ? {} : { whenBusy }),
+    }, {
       ownership: { kind: "conversation" },
     });
     if (receipt) receipt.taskId = id;
@@ -240,7 +255,7 @@ export const RoutingTask = defineTask<RoutingInput, RoutingCheckpoint, RoutingRe
                     "Route events link user inputEntryId to its recipient; reports identify their worker but are not new user requests. " +
                     "Entry IDs order dialogue/events; task IDs order reporter creation only, not delivery or user dialogue. " +
                     "Do not blindly reuse the last recipient or let an unrelated worker report switch the topic. " +
-                    "An idle subagent can still receive follow-ups; a busy one receives steering at its next tool boundary. " +
+                    "An idle subagent can still receive follow-ups; a busy one receives the input according to its requested queue mode. " +
                     "Availability alone must never send unrelated work to a worker. User frustration, questions about " +
                     "delegation, and changes to coordinator behavior belong to root. A background completion alone does not change the topic. " +
                     "Choose root for new independent work with no clearly suitable existing subagent, genuine topic changes, " +
@@ -303,7 +318,7 @@ export const RoutingTask = defineTask<RoutingInput, RoutingCheckpoint, RoutingRe
         type: "input",
         content: task.input.content,
         requestId,
-        whenBusy: "steer",
+        whenBusy: task.input.whenBusy ?? "steer",
         entry: {
           kind: "anima.routed-message",
           data: {
@@ -314,7 +329,18 @@ export const RoutingTask = defineTask<RoutingInput, RoutingCheckpoint, RoutingRe
             routingTaskId: String(task.id),
           },
         },
-      }, context);
+      }, context).catch(async error => {
+        if (!(error instanceof ConversationBusy)) throw error;
+        await runtime.commit(async tx => {
+          await tx.appendEntry(runtime.conversationId, {
+            kind: "anima.routing-outcome",
+            data: { inputEntryId: String(task.input.entryId), conversationId: String(conversationId), status: "failed", reason: "destination_busy" },
+          });
+          return { status: "terminal", outcome: { status: "failed", error: { message: "Routing destination is busy" } } };
+        }, context);
+        return undefined;
+      });
+      if (!submission) return;
       const admitted = await submission.status(context);
       // Reporter creation and routing completion are atomic. A replay reattaches to the same submission.
       await runtime.commit(async (tx) => {
@@ -325,7 +351,7 @@ export const RoutingTask = defineTask<RoutingInput, RoutingCheckpoint, RoutingRe
           message: task.input.content,
           ...(worker === undefined ? {} : { name: worker.name }),
           requestId,
-          whenBusy: "steer",
+          whenBusy: task.input.whenBusy ?? "steer",
           reportToCaller: conversationId !== runtime.conversationId,
           inputEntryId: task.input.entryId,
           routingTaskId: task.id,
@@ -336,7 +362,7 @@ export const RoutingTask = defineTask<RoutingInput, RoutingCheckpoint, RoutingRe
             inputEntryId: String(task.input.entryId), routingTaskId: String(task.id),
             conversationId: String(conversationId), destination: worker?.name ?? "Root",
             submissionId: String(submission.id), reporterTaskId: String(reporterTaskId),
-            status: "dispatched", reason, deliveryStatus: admitted.status, whenBusy: "steer",
+            status: "dispatched", reason, deliveryStatus: admitted.status, whenBusy: task.input.whenBusy ?? "steer",
           },
         });
         return {
@@ -350,7 +376,7 @@ export const RoutingTask = defineTask<RoutingInput, RoutingCheckpoint, RoutingRe
               classification,
               reporterTaskId,
               deliveryStatus: admitted.status,
-              whenBusy: "steer",
+              whenBusy: task.input.whenBusy ?? "steer",
             },
           },
         };
