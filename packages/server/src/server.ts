@@ -10,6 +10,7 @@ import type { Context } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
 import { createModels } from "@earendil-works/pi-ai/models";
 import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
+import { CodemodeSandbox } from "@earendil-works/pi-codemode";
 import {
   AgentDoc,
   configure,
@@ -30,6 +31,7 @@ import {
   type WatchEnd,
   type WatchHandle,
 } from "@earendil-works/pi-durable";
+import { createCodemodeExtension } from "@earendil-works/pi-durable/codemode";
 import { NodeExecutionEnv } from "@earendil-works/pi-durable/env/node";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
 import { CodingTools } from "@earendil-works/pi-durable/tools";
@@ -45,6 +47,9 @@ const DOCUMENT_TOKENS: readonly ConversationDocToken<DurableJsonObject>[] = [
   AgentDoc, LiveDoc, InboxDoc, ProviderDoc, UsageDoc, SubagentsDoc,
 ];
 const DOCUMENTS = new Map(DOCUMENT_TOKENS.map((token) => [token.definition.kind, token]));
+
+// Match Pi's process-wide limit, including cancelled workers that are still exiting.
+let activeCodemodeWorkers = 0;
 
 /** Open a SQLite-backed coding harness using OPENAI_API_KEY from the environment. */
 export async function createHarness() {
@@ -63,6 +68,16 @@ export async function createHarness() {
   registry.install(CodingTools);
   registry.install(BackgroundSubagents);
   registry.install(Routing);
+  const sandbox = new CodemodeSandbox({
+    memoryLimitBytes: 256 * 1024 * 1024,
+    acquireWorker() {
+      if (activeCodemodeWorkers >= 2) throw new Error("Codemode worker limit reached; retry after a running script exits");
+      activeCodemodeWorkers++;
+      return () => { activeCodemodeWorkers--; };
+    },
+  });
+  const codemode = createCodemodeExtension({ sandbox });
+  registry.install(codemode);
 
   const harness = await Harness.open(
     await openNodeSqliteStorage(databasePath),
@@ -76,7 +91,13 @@ export async function createHarness() {
       env: ({ cwd }) => new NodeExecutionEnv({ cwd: cwd ?? process.cwd() }),
     },
     BACKGROUND_CONTEXT,
-  );
+  ).catch(async (error) => {
+    await sandbox.close();
+    throw error;
+  });
+  harness.subscribeClose(() => {
+    void sandbox.close().catch((error) => console.error("Codemode shutdown failed:", error));
+  });
   const root = await harness.root(BACKGROUND_CONTEXT, {
     agent: {
       model: { provider: "openai", modelId: "gpt-6.1-sol" },
@@ -115,6 +136,19 @@ export async function createHarness() {
     for (const id of children) {
       await configure(tx, id, WorkerCapabilities);
     }
+    // Upgrade existing independent coding conversations without replacing their tool restrictions.
+    let cursor: Cursor | undefined;
+    do {
+      const page = await tx.scanConversations({}, 100, cursor);
+      for (const conversation of page.items) {
+        if (conversation.id === root.id || conversation.owner !== undefined) continue;
+        const agent = await tx.doc(AgentDoc, conversation.id);
+        if (!Array.isArray(agent.extensions) || !agent.extensions.includes(CodingTools.name)) continue;
+        if (!agent.extensions.includes(codemode.name)) agent.extensions.push(codemode.name);
+        if (Array.isArray(agent.tools) && !agent.tools.includes("codemode")) agent.tools.push("codemode");
+      }
+      cursor = page.next;
+    } while (cursor !== undefined);
   }, BACKGROUND_CONTEXT);
 
   return { harness, root };
@@ -182,6 +216,7 @@ export async function startServer(harness?: Harness, options: { port?: number } 
               thinkingLevel: defaults.thinkingLevel,
               cwd: request.cwd ?? defaults.cwd ?? process.cwd(),
               ...WorkerCapabilities,
+              modelTools: null,
               instructions: request.instructions ?? "You are an independent coding assistant.",
             },
           }, context);

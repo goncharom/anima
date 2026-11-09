@@ -14,9 +14,10 @@ import {
 import { CodingTools } from "@earendil-works/pi-durable/tools";
 import { ConversationReporter, createReporter } from "./conversation-reporter.ts";
 
-/** Replace inherited coordinator filters for all coding workers. */
+/** Extension references select by name; each harness installs its own codemode sandbox. */
 export const WorkerCapabilities = {
-  extensions: [CodingTools], tools: CodingTools.tools ?? [], modelTools: null,
+  extensions: [CodingTools, { name: "codemode" }],
+  tools: null,
 } satisfies AgentChange;
 
 export type SubagentInfo = {
@@ -85,6 +86,7 @@ const subagent = defineTool({
       await configure(tx, child.id, {
         thinkingLevel: "high",
         ...WorkerCapabilities,
+        modelTools: null,
         instructions:
           `You are the background subagent ${JSON.stringify(name)}. Complete the parent's task independently. ` +
           "Do not delegate to other agents. Your final answer is automatically reported to the parent. " +
