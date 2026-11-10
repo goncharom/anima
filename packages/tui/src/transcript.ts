@@ -1,8 +1,10 @@
 import type { AssistantMessage, ToolCall } from "@earendil-works/pi-ai";
 import {
-  AssistantMessageComponent, getMarkdownTheme, ToolExecutionComponent, UserMessageComponent,
+  AssistantMessageComponent, getMarkdownTheme, ToolExecutionComponent, UserMessageComponent, type ToolRenderers,
 } from "@earendil-works/pi-coding-agent";
-import { Container, Markdown, Text, type Component, type TUI } from "@earendil-works/pi-tui";
+import {
+  Container, getCapabilities, getImageDimensions, imageFallback, Markdown, Text, type Component, type TUI,
+} from "@earendil-works/pi-tui";
 import { object, type ConversationState, type Entry } from "./client.ts";
 import { button, clean, cleanData, colors, line } from "./ui.ts";
 
@@ -19,6 +21,24 @@ export function contentText(value: unknown): string {
   if (typeof value === "string") return value;
   return Array.isArray(value) ? value.flatMap(part => object(part).type === "text" ? [String(object(part).text ?? "")] : []).join("\n") : "";
 }
+
+/** Keep Pi's tool shell and click expansion, without its inline shortcut tutorial. */
+const toolRenderers: ToolRenderers = {
+  renderResult({ content }, { expanded }, theme, context) {
+    const output = content.flatMap(part => {
+      if (part.type === "text") return [part.text];
+      if (part.type === "image" && (!getCapabilities().images || !context.showImages)) {
+        return [imageFallback(part.mimeType, getImageDimensions(part.data, part.mimeType) ?? undefined)];
+      }
+      return [];
+    }).join("\n");
+    const lines = output.split("\n");
+    const preview = expanded ? lines : lines.slice(0, 10);
+    let text = preview.map(value => theme.fg("toolOutput", value)).join("\n");
+    if (preview.length < lines.length) text += theme.fg("muted", `\n… (${lines.length - preview.length} more lines)`);
+    return new Text(text, 0, 0);
+  },
+};
 
 export class Transcript extends Container {
   private ui: TUI;
@@ -44,7 +64,7 @@ export class Transcript extends Container {
     let tool = this.tools.get(call.id);
     const args = JSON.stringify(call.arguments);
     if (!tool) {
-      const component = new ToolExecutionComponent(clean(call.name), call.id, cleanData(call.arguments), { showImages: true }, {}, this.ui, cwd);
+      const component = new ToolExecutionComponent(clean(call.name), call.id, cleanData(call.arguments), { showImages: true }, toolRenderers, this.ui, cwd);
       component.setExpanded(this.expanded);
       // Enables argument expansion even before the tool publishes its first output.
       component.updateResult({ content: [], isError: false }, true);
@@ -152,17 +172,14 @@ export class Transcript extends Container {
       const tool = this.tool({ id, name: `↳ ${value.name}`, arguments: object(value.arguments) as ToolCall["arguments"] }, cwd);
       const summary = object(value.summary);
       this.result(tool, {
-        content: [{ type: "text", text: String(value.output ?? summary.error ?? (value.status === "done" ? "Completed · result returned to parent tool" : "Running…")) }],
+        content: [{ type: "text", text: String(value.output ?? summary.error ?? (value.status === "done" ? "Completed" : "Running…")) }],
         details: value.details, isError: summary.isError === true,
       }, value.status !== "done");
       addTool(tool, id);
     }
     if (!state.snapshot) this.addChild(line(colors.muted("Loading conversation…")));
-    else if (!this.children.length) this.addChild(new Text(colors.muted("Write a message, or /help for commands."), 1, 1));
-    if (live.run) {
-      const retry = object(generation.retry);
-      this.addChild(line(colors.yellow(retry.error ? `Retrying: ${clean(String(retry.error))}` : "● Working…  Escape to stop")));
-    }
+    const retry = object(generation.retry);
+    if (retry.error) this.addChild(line(colors.yellow(`Retrying: ${clean(String(retry.error))}`)));
   }
 
   private addMessage(key: string, create: () => Component) {

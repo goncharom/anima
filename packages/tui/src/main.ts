@@ -19,7 +19,7 @@ if (values.help) {
   initKeys();
   const url = values.server ?? process.env.ANIMA_SERVER_URL ?? "http://127.0.0.1:4242";
   const tui = new TuiAltScreen(new ProcessTerminal(), false, undefined, {
-    mouse: true, scrollToEndIndicator: () => colors.accent("↓ Follow output"),
+    mouse: true, scrollToEndIndicator: () => colors.accent("↓"),
   });
   const app = new App(tui, url);
   const stop = () => { void app.stop().catch(error => { console.error(error); process.exitCode = 1; }); };

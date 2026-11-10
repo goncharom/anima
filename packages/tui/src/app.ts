@@ -9,7 +9,7 @@ import { Dialogs } from "./dialogs.ts";
 import { Sidebar, workingConversations } from "./sidebar.ts";
 import { Transcript, userText } from "./transcript.ts";
 import { forkFamily, historyTree } from "./tree.ts";
-import { button, clean, colors, editorTheme, line, windowsKeys } from "./ui.ts";
+import { button, clean, colors, editorTheme, line } from "./ui.ts";
 
 const COMMANDS: SlashCommand[] = [
   { name: "new", description: "New conversation in a server folder" },
@@ -19,11 +19,11 @@ const COMMANDS: SlashCommand[] = [
   { name: "archived", description: "Restore/open archived conversations" },
   { name: "cwd", description: "Change folder while idle (does not move files)" },
   { name: "fork", description: "Fork current history into a chosen folder" },
-  { name: "model", description: "Choose a server chat model · Ctrl+L" },
+  { name: "model", description: "Choose a server chat model" },
   { name: "queue", description: "Edit queued steering/follow-up messages" },
   { name: "tree", description: "Browse branches, or fork/edit earlier history" },
-  { name: "sidebar", description: "Toggle sidebar · F2" },
-  { name: "help", description: "Commands and shortcuts" },
+  { name: "sidebar", description: "Toggle sidebar" },
+  { name: "help", description: "Show commands" },
   { name: "quit", description: "Disconnect client; leave server/work running" },
 ];
 
@@ -72,8 +72,13 @@ export class App {
       command: name => void this.act(() => this.command(name)),
     });
     this.main.addChild(line("Connecting to Anima…"));
+    const sidebarVisible = ({ width }: { width: number }) => this.sidebarOpen && width >= 72;
     tui.setLayoutRoot(new HStack([
-      { component: this.sidebar, basis: 27, shrink: 0, visible: ({ width }) => this.sidebarOpen && width >= 72 },
+      { component: this.sidebar, basis: 27, shrink: 0, visible: sidebarVisible },
+      { component: {
+        render: width => Array(tui.terminal.rows).fill(width > 0 ? colors.muted("│") : ""),
+        invalidate() {},
+      }, basis: 1, shrink: 0, visible: sidebarVisible },
       { component: this.main, basis: 0, grow: 1, minSize: 0 },
     ], { gap: 1 }));
     this.remote.onChange = state => {
@@ -152,7 +157,7 @@ export class App {
     this.main.addChild(button(() => {
       const name = this.directory.find(info => info.conversationId === this.selected)?.name ?? "Conversation";
       const count = queuedInputs(this.remote.state(this.selected)).length;
-      return `${colors.accent("☰")} ${clean(name)}${count ? colors.yellow(` · ${count} queued /queue`) : ""}`;
+      return `${colors.accent("☰")} ${clean(name)}${count ? colors.yellow(` · ${count} queued`) : ""}`;
     }, () => this.tui.terminal.columns < 72
       ? void this.act(() => this.command("conversations")) : this.toggleSidebar()), { basis: 1, shrink: 0 });
     this.main.addChild(this.view(id).scroll, { basis: 0, grow: 1, minSize: 1 });
@@ -162,16 +167,19 @@ export class App {
       return colors.muted(status ? `${clean(status.cwd)}${status.gitBranch ? ` · ${clean(status.gitBranch)}` : ""}` : "Waiting for server status…");
     }), { basis: 1, shrink: 0 });
     this.main.addChild(line(() => this.footer()), { basis: 1, shrink: 0 });
-    this.main.addChild(line(() => this.connections.size < 3
-      ? colors.yellow(`Reconnecting…${this.connectionError ? ` ${this.connectionError}` : ""}`)
-      : this.note || (Object.values(this.graph.tasks).some(task => String(task.conversationId) === this.selected && task.kind === "anima.routing")
-        ? colors.yellow("Dispatching input…")
-        : colors.muted(`Enter send/steer · ${windowsKeys ? "Ctrl+Q" : "Alt+Enter"} follow-up · Escape stop · F2 sidebar · /help`))), { basis: 1, shrink: 0 });
+    this.main.addChild(line(() => this.notice()), { basis: 1, shrink: 0, visible: () => Boolean(this.notice()) });
     this.unfollow = this.remote.follow(id, (ready, error) => {
       if (this.selected === id) this.connection("conversation", ready, error);
     });
     this.tui.setFocus(this.editor);
     this.refresh();
+  }
+
+  private notice() {
+    if (this.connections.size < 3) return colors.yellow(`Reconnecting…${this.connectionError ? ` ${this.connectionError}` : ""}`);
+    if (this.note) return this.note;
+    return Object.values(this.graph.tasks).some(task => String(task.conversationId) === this.selected && task.kind === "anima.routing")
+      ? colors.yellow("Dispatching input…") : "";
   }
 
   private connection(name: string, ready: boolean, error?: unknown) {
@@ -219,7 +227,7 @@ export class App {
       void this.act(async () => {
         await this.remote.rpc.abortConversation({ conversationId: id }, { signal: this.remote.lifetime.signal });
         this.pending.delete(id);
-        this.note = "Stopped selected conversation; background work may continue.";
+        this.note = "";
       });
       return true;
     }
@@ -285,14 +293,14 @@ export class App {
     if (name === "sidebar") return this.toggleSidebar();
     if (name === "quit") return this.onExit();
     if (name === "help") {
-      const choice = await this.dialogs.choose("Anima · Enter send/steer · Escape stop · Ctrl+O tools · /queue edits", COMMANDS
+      const choice = await this.dialogs.choose("Commands", COMMANDS
         .filter(command => command.name !== "help").map(command => ({ value: command.name, label: `/${command.name}`, description: command.description })));
       if (choice) await this.command(choice);
       return;
     }
     if (name === "conversations" || name === "archived") {
       const archived = name === "archived";
-      const choice = await this.dialogs.choose(archived ? "Archived · select to restore and open" : "Conversations", this.directory
+      const choice = await this.dialogs.choose(archived ? "Archived" : "Conversations", this.directory
         .filter(info => info.archived === archived).sort((a, b) => Number(b.conversationId === this.rootId) - Number(a.conversationId === this.rootId))
         .map(info => ({ value: info.conversationId, label: info.name, description: info.conversationId === this.rootId ? "Chief of staff" : undefined })));
       if (choice) {
@@ -325,7 +333,7 @@ export class App {
       if (cwd === undefined) return;
       if (name === "cwd") {
         await this.remote.rpc.updateConversation({ conversationId: id, cwd }, { signal });
-        this.note = "Working directory changed; no files were moved.";
+        this.note = "";
       } else {
         const latest = [...this.remote.state(id).entries.keys()].sort((a, b) => a - b).at(-1);
         const result = await this.dialogs.wait("Forking conversation…", signal => this.remote.rpc.forkConversation({ conversationId: id, entryId: latest === undefined ? undefined : String(latest), cwd }, { signal }));
@@ -338,7 +346,7 @@ export class App {
       const response = await this.dialogs.wait("Loading server models…", signal => this.remote.rpc.listModels({}, { signal }));
       if (!response) return;
       const selected = this.remote.state(id).snapshot?.status?.model;
-      const choice = await this.dialogs.choose("Chat model · configured on server", response.models.map((info, index) => ({
+      const choice = await this.dialogs.choose("Chat model", response.models.map((info, index) => ({
         value: String(index), label: `${selected?.provider === info.model?.provider && selected?.modelId === info.model?.modelId ? "✓ " : ""}${info.name}`,
         description: `${info.model?.provider}/${info.model?.modelId} · ${Math.round(info.contextWindow / 1_000)}k context`,
       })));
@@ -347,7 +355,7 @@ export class App {
     }
     if (name === "queue") {
       const items = queuedInputs(this.remote.state(id));
-      const choice = await this.dialogs.choose("Queued user inputs · dispatching/placed inputs cannot be edited", items.map(item => ({ value: item.id, label: item.content.slice(0, 200), description: item.mode === "steer" ? "steering" : "follow-up" })));
+      const choice = await this.dialogs.choose("Queued inputs", items.map(item => ({ value: item.id, label: item.content.slice(0, 200), description: item.mode === "steer" ? "steering" : "follow-up" })));
       const item = items.find(item => item.id === choice);
       if (item) await this.dialogs.editQueue(item, async change => {
         await this.remote.rpc.updateQueuedInput({
@@ -358,7 +366,7 @@ export class App {
       return;
     }
     if (name === "tree") return this.tree(id);
-    this.note = colors.error(`Unknown command /${clean(name)}; try /help`);
+    this.note = colors.error(`Unknown command /${clean(name)}`);
     this.tui.requestRender();
   }
 
@@ -412,7 +420,6 @@ export class App {
     if (result) {
       this.select(result.conversationId);
       if (text !== undefined) this.editor.setText(clean(text));
-      this.note = text === undefined ? "Forked selected history." : "Forked before the input; edit the draft and send when ready.";
       this.refresh();
     }
   }

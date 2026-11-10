@@ -34,15 +34,15 @@ export class Sidebar extends VStack {
   constructor(actions: Actions) {
     super();
     this.actions = actions;
-    this.addChild(button(() => colors.accent("▾ Conversations  F2"), actions.collapse), { basis: 1, shrink: 0 });
+    this.addChild(button(() => colors.accent("▾ Conversations"), actions.collapse), { basis: 1, shrink: 0 });
     this.addChild(button("＋ New conversation", () => actions.command("new")), { basis: 1, shrink: 0 });
     this.addChild(this.scroll, { basis: 0, grow: 1, minSize: 1 });
     for (const [label, command] of [
       ["Rename selected", "rename"], ["Change folder", "cwd"], ["Fork in folder", "fork"],
-      ["Archive selected", "archive"], ["Archived…", "archived"], ["Help  /help", "help"],
-    ]) this.addChild(button(() => colors.muted(command === "archive" && this.rootSelected ? "Root cannot be archived" : label), () => {
+      ["Archive selected", "archive"], ["Archived…", "archived"], ["Help", "help"],
+    ]) this.addChild(button(() => colors.muted(label), () => {
       if (command !== "archive" || !this.rootSelected) actions.command(command);
-    }), { basis: 1, shrink: 0 });
+    }), { basis: 1, shrink: 0, visible: () => command !== "archive" || !this.rootSelected });
   }
 
   update(conversations: ConversationInfo[], rootId: string, selected: string, busy: Set<string>, connected: boolean) {

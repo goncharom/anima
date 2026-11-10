@@ -4,10 +4,11 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import {
   CancellableLoader, Container, Editor, fuzzyFilter, getKeybindings, Input, isFocusable, matchesKey,
-  SelectList, type Component, type Focusable, type OverlayHandle, type SelectItem, type TUI,
+  SelectList, type Component, type Focusable, type OverlayHandle, type OverlayOptions, type SelectItem, type TUI,
 } from "@earendil-works/pi-tui";
 import { type QueuedInput, type RemoteClient } from "./client.ts";
 import { button, clean, colors, editorTheme, line } from "./ui.ts";
+import { DirectoryNavigator } from "./directory-navigator.ts";
 
 class Pane extends Container implements Focusable {
   private body: Component;
@@ -18,14 +19,13 @@ class Pane extends Container implements Focusable {
     this.active = value;
     if (isFocusable(this.body)) this.body.focused = value;
   }
-  constructor(title: string, body: Component, cancel: () => void, hint = "Escape to close") {
+  constructor(title: string, body: Component, cancel: () => void) {
     super();
     this.body = body;
     this.cancel = cancel;
     this.addChild(new DynamicBorder(colors.accent));
     this.addChild(line(colors.accent(clean(title))));
     this.addChild(body);
-    this.addChild(line(colors.muted(hint)));
     this.addChild(new DynamicBorder(colors.accent));
   }
   handleInput(data: string) {
@@ -54,7 +54,7 @@ class Picker extends Container implements Focusable {
     const selected = this.list?.getSelectedItem()?.value;
     this.height = this.ui.terminal.rows;
     const visible = fuzzyFilter(this.items, this.input.getValue(), item => `${item.label} ${item.description ?? ""}`);
-    this.list = new SelectList(visible, Math.max(1, Math.floor(this.height * 0.9) - 8), {
+    this.list = new SelectList(visible, Math.max(1, Math.floor(this.height * 0.9) - 7), {
       ...getSelectListTheme(), noMatch: () => colors.muted("  No matches"),
     });
     if (selected) this.list.setSelectedIndex(Math.max(0, visible.findIndex(item => item.value === selected)));
@@ -99,10 +99,10 @@ class QueueEditor extends Container implements Focusable {
     this.editor = new Editor(ui, editorTheme(), { paddingX: 1 });
     this.editor.disableSubmit = true;
     this.editor.setText(clean(item.content));
-    this.addChild(button(() => colors.accent(`Mode: ${this.mode === BusyBehavior.STEER ? "steering" : "follow-up"}  [Tab to change]`), () => this.toggle()));
+    this.addChild(button(() => colors.accent(`Mode: ${this.mode === BusyBehavior.STEER ? "steering" : "follow-up"}`), () => this.toggle()));
     this.addChild(this.editor);
-    this.addChild(button(() => "Save [Ctrl+S]", () => void this.save(false)));
-    this.addChild(button(() => "Withdraw [Ctrl+D]", () => void this.save(true)));
+    this.addChild(button(() => "Save", () => void this.save(false)));
+    this.addChild(button(() => "Withdraw", () => void this.save(true)));
     this.addChild(line(() => this.saving ? "Saving…" : colors.error(this.error)));
   }
   private toggle() {
@@ -145,7 +145,7 @@ export class Dialogs {
     this.error = error;
   }
   cancel() { this.current?.(); }
-  private show<T>(build: (done: (value?: T) => void) => Component, dispose = () => {}) {
+  private show<T>(build: (done: (value?: T) => void) => Component, dispose = () => {}, options: OverlayOptions = {}) {
     this.cancel();
     return new Promise<T | undefined>(resolve => {
       let handle: OverlayHandle | undefined;
@@ -160,7 +160,7 @@ export class Dialogs {
         resolve(value);
       };
       this.current = () => done();
-      handle = this.ui.showOverlay(build(done), { anchor: "center", width: "90%", maxHeight: "90%", margin: 1 });
+      handle = this.ui.showOverlay(build(done), { anchor: "center", width: "90%", maxHeight: "90%", margin: 1, ...options });
     });
   }
   choose(title: string, items: SelectItem[]) {
@@ -174,7 +174,7 @@ export class Dialogs {
       input.setValue(clean(initial).replace(/[\r\n\t]/g, " "));
       input.handleInput("\x05"); // Place the cursor after the initial value (Ctrl+E).
       input.onSubmit = value => { if (value.trim()) done(value); };
-      return new Pane(title, input, () => done(), "Enter to save · Escape to cancel");
+      return new Pane(title, input, () => done());
     });
   }
   async wait<T>(title: string, operation: (signal: AbortSignal) => Promise<T>): Promise<T | undefined> {
@@ -190,34 +190,12 @@ export class Dialogs {
       return new Pane(title, loader, () => done());
     }, () => { controller.abort(); loader?.stop(); });
   }
-  async folder(remote: RemoteClient, initial: string): Promise<string | undefined> {
-    let path = initial;
-    let offset = 0;
-    let known = new Map<string, { name: string; path: string }>();
-    while (!remote.lifetime.signal.aborted) {
-      const page = await this.wait("Loading server folders…", signal => remote.rpc.listDirectories({ path, offset }, { signal }));
-      if (!page) return;
-      path = page.path;
-      for (const directory of page.directories) known.set(directory.path, directory);
-      const items: SelectItem[] = [
-        { value: "select", label: "✓ Use this folder", description: path },
-        { value: "parent", label: ".. Parent folder", description: page.parent },
-        { value: "path", label: "Enter a path…", description: "On the server; ~ is its home folder" },
-        ...[...known.values()].map(directory => ({ value: `dir:${directory.path}`, label: `${directory.name}/` })),
-        ...(page.nextOffset === undefined ? [] : [{ value: "more", label: "Load more folders…" }]),
-      ];
-      const choice = await this.choose(`Server folder · ${path}`, items);
-      if (choice === undefined) return;
-      if (choice === "select") return path;
-      if (choice === "more") { offset = page.nextOffset!; continue; }
-      if (choice === "path") {
-        const typed = await this.ask("Server folder path", path);
-        if (typed === undefined) continue;
-        path = typed;
-      } else path = choice === "parent" ? page.parent : choice.slice(4);
-      offset = 0;
-      known = new Map();
-    }
+  folder(remote: RemoteClient, initial: string): Promise<string | undefined> {
+    let navigator: DirectoryNavigator | undefined;
+    return this.show<string>(done => {
+      navigator = new DirectoryNavigator(remote, this.ui, initial, done);
+      return navigator;
+    }, () => navigator?.dispose(), { width: "72%", minWidth: 54, maxHeight: "82%" });
   }
   editQueue(item: QueuedInput, apply: (change: QueueChange) => Promise<void>) {
     return this.show<boolean>(done => new Pane("Edit queued input", new QueueEditor(this.ui, item, apply, () => done(true)), () => done()));
@@ -231,7 +209,7 @@ export class Dialogs {
         const selected = selector?.getTreeList().getSelectedNode()?.entry.id;
         const query = selector?.getTreeList().getSearchQuery() ?? "";
         rows = this.ui.terminal.rows;
-        selector = new TreeSelectorComponent(nodes, current, Math.max(10, (Math.floor(rows * 0.9) - 7) * 2),
+        selector = new TreeSelectorComponent(nodes, current, Math.max(10, (Math.floor(rows * 0.9) - 5) * 2),
           value => done(value), () => done(), undefined, selected, "default");
         selector.onCopy = text => { if (text) void copyToClipboard(text).catch(this.error); };
         selector.focused = focused;
@@ -243,22 +221,19 @@ export class Dialogs {
         set focused(value: boolean) { focused = value; selector.focused = value; },
         render: width => {
           if (rows !== this.ui.terminal.rows) rebuild();
-          if (rows < 14) return line("Tree needs 14 terminal rows; resize or Escape.").render(width);
-          // Reuse Pi's tree/list controls, with help that describes Durable forks rather than session mutation/labels.
+          if (rows < 12) return line("Tree requires at least 12 terminal rows.").render(width);
           const list = selector.getTreeList();
           return [
             ...new DynamicBorder(colors.accent).render(width),
-            ...line(colors.accent("History tree · conversation labels open; earlier entries fork")).render(width),
+            ...line(colors.accent("History tree")).render(width),
             ...line(colors.muted(`Search: ${clean(list.getSearchQuery())}`)).render(width),
             ...list.render(width),
-            ...line(colors.muted("↑↓ move · ←→ page · Ctrl+←/→ branch · Ctrl+U users · Ctrl+L branches")).render(width),
-            ...line(colors.muted("Enter open/fork · user inputs restore for editing · Ctrl+X copy · Escape close")).render(width),
             ...new DynamicBorder(colors.accent).render(width),
           ];
         },
         handleInput: data => {
           if (matchesKey(data, "escape") || matchesKey(data, "ctrl+c")) done();
-          else if (rows >= 14) selector.handleInput(data);
+          else if (rows >= 12) selector.handleInput(data);
         },
         invalidate() { selector.invalidate(); },
       } satisfies Component & Focusable;
