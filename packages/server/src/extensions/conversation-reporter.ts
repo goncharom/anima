@@ -4,7 +4,6 @@ import {
   defineDocFamily,
   defineTask,
   type ConversationId,
-  type EntryId,
   type InputEntry,
   type SubmissionId,
   type TaskId,
@@ -13,12 +12,8 @@ import {
 
 /** Private request receipts prevent duplicate tasks when a client retries. */
 export const InputRequests = defineDocFamily<{ taskId?: TaskId }, null>({
-  kind: "anima.input-request", version: 2, scope: "conversation", family: true,
+  kind: "anima.input-request", version: 1, scope: "conversation", family: true,
   history: "latest", fork: "initial", initial: () => ({}), checkpointWhen: () => false,
-  migrate: (value) => {
-    const taskId = value.taskId ?? value.routingTaskId ?? value.reporterTaskId;
-    return typeof taskId === "number" ? { taskId: taskId as TaskId } : {};
-  }
 });
 
 /** Every reporter has the same background ownership boundary. */
@@ -33,15 +28,11 @@ type ReporterInput = {
   requestId?: string;
   whenBusy?: "followUp" | "steer" | "reject";
   entry?: InputEntry;
-  inputEntryId?: EntryId;
-  routingTaskId?: TaskId;
-  reportToCaller?: boolean;
 };
 type ReporterCheckpoint = { phase: "deliver" } | { phase: "report"; report?: string; submissionId?: SubmissionId };
 
 /** Submit or reattach to one input, then deliver its answer as a background follow-up. */
 export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint, null>({
-  // Keep the durable kind stable for reporters already stored in SQLite.
   name: "anima.subagent-reporter",
   version: 1,
   initial: () => ({ phase: "deliver" }),
@@ -88,18 +79,6 @@ export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint
           report = `[${source} completed]\n\nInstruction answered:\n${instruction}` +
             `\n\nResult:\n${text || "Completed without a text response."}`;
         }
-        if (task.input.routingTaskId !== undefined) {
-          await tx.appendEntry(runtime.conversationId, {
-            kind: "anima.routing-settled",
-            data: {
-              routingTaskId: String(task.input.routingTaskId),
-              ...(task.input.inputEntryId === undefined ? {} : { inputEntryId: String(task.input.inputEntryId) }),
-              conversationId: String(task.input.conversationId), submissionId: String(submission.id),
-              status: settled.status,
-              ...(settled.status === "unanswered" ? { reason: settled.reason } : {}),
-            },
-          });
-        }
         return {
           status: "running",
           checkpoint: { phase: "report", submissionId: submission.id, ...(report === undefined ? {} : { report }) },
@@ -108,7 +87,7 @@ export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint
     },
     report: async (task, runtime, context) => {
       const report = task.state.checkpoint.report;
-      if (report !== undefined && task.input.reportToCaller !== false) {
+      if (report !== undefined) {
         const caller = (await runtime.conversation(runtime.conversationId, context))!;
         await caller.submit({
           type: "input",
@@ -125,8 +104,6 @@ export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint
               ...(task.state.checkpoint.submissionId === undefined ? {} : {
                 sourceSubmissionId: String(task.state.checkpoint.submissionId),
               }),
-              ...(task.input.inputEntryId === undefined ? {} : { inputEntryId: String(task.input.inputEntryId) }),
-              ...(task.input.routingTaskId === undefined ? {} : { routingTaskId: String(task.input.routingTaskId) }),
               ...(task.input.name === undefined ? {} : { sourceName: task.input.name }),
             },
           },

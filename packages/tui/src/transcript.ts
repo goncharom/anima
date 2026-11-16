@@ -99,16 +99,6 @@ export class Transcript extends Container {
     };
     for (const entry of [...state.entries.values()].sort((a, b) => a.id - b.id)) {
       const data = object(entry.data);
-      if (entry.kind === "anima.routing-input") {
-        this.addMessage(`${entry.id}:user`, () => new UserMessageComponent(clean(String(data.content ?? ""))));
-      }
-      if (entry.kind === "anima.routing-outcome") {
-        if (data.status === "dispatched" && String(data.conversationId) !== state.id) {
-          this.addMessage(`${entry.id}:route`, () => new Text(colors.muted(`→ ${clean(String(data.destination ?? "Subagent"))} · ${data.deliveryStatus === "queued" ? "queued" : "dispatched"}`), 1, 0));
-        } else if (data.status === "failed" || data.status === "aborted") {
-          this.addMessage(`${entry.id}:notice`, () => new Text(colors.yellow(`Input ${data.status}: ${clean(String(data.reason ?? ""))}`), 1, 0));
-        }
-      }
       if (entry.kind === "pi.compaction" || entry.kind === "pi.reset") {
         this.addMessage(`${entry.id}:context`, () => new Text(colors.muted(entry.kind === "pi.reset" ? "Context reset" : "Context compacted"), 1, 1));
         continue;
@@ -116,8 +106,6 @@ export class Transcript extends Container {
       for (const [index, message] of (entry.model ?? []).entries()) {
         const key = `${entry.id}:${index}`;
         if (message.role === "user") {
-          // Root already displays its routing receipt; its internal delivery is not a second user message.
-          if (entry.kind === "anima.routed-message" && String(data.sourceConversationId) === state.id) continue;
           if (data.origin === "agent") {
             this.addMessage(key, () => {
               const group = new Container();
@@ -191,7 +179,6 @@ export class Transcript extends Container {
 
 /** Used by the tree adapter; reports remain visibly distinct from human messages. */
 export function userText(entry: Entry): string | undefined {
-  if (entry.kind === "anima.routing-input") return String(object(entry.data).content ?? "");
   const origin = object(entry.data).origin;
   if (origin === "agent" || entry.kind !== "pi.user" && origin !== "user") return;
   const message = entry.model?.find(message => message.role === "user");

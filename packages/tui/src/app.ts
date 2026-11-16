@@ -177,9 +177,7 @@ export class App {
 
   private notice() {
     if (this.connections.size < 3) return colors.yellow(`Reconnecting…${this.connectionError ? ` ${this.connectionError}` : ""}`);
-    if (this.note) return this.note;
-    return Object.values(this.graph.tasks).some(task => String(task.conversationId) === this.selected && task.kind === "anima.routing")
-      ? colors.yellow("Dispatching input…") : "";
+    return this.note;
   }
 
   private connection(name: string, ready: boolean, error?: unknown) {

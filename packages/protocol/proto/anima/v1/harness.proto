@@ -57,16 +57,13 @@ message SubmitInputRequest {
   string content = 2;
   // Reusing a nonempty ID in this conversation does not send the input twice.
   optional string request_id = 3;
-  // Unspecified means steer for root/routed input and root's subagents, or queue
-  // for ordinary conversations. An explicit mode also applies after routing.
+  // Input goes to the specified conversation. Unspecified means steer for root
+  // and root's subagents, or queue for independent conversations.
   BusyBehavior when_busy = 4;
 }
 
 // Acknowledges acceptance, not completion. Observe state for progress and results.
-message SubmitInputResponse {
-  reserved 1, 2, 3;
-  reserved "submission_id", "routing_task_id", "reporter_task_id";
-}
+message SubmitInputResponse {}
 
 message WatchConversationRequest {
   string conversation_id = 1;

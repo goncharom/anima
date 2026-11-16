@@ -38,14 +38,12 @@ import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite
 import { CodingTools } from "@earendil-works/pi-durable/tools";
 import { BackgroundSubagents, CoordinatorTools, SubagentsDoc, WorkerCapabilities } from "./extensions/subagents.ts";
 import { createReporter, InputRequests } from "./extensions/conversation-reporter.ts";
-import { routeInput, Routing } from "./extensions/routing.ts";
 import { openMcp } from "./extensions/mcp.ts";
 import {
   abortConversation, backfillConversations, conversationStatus, ConversationsDoc, directoryPath,
   displayName, listDirectories, registerConversation, updateConversation, updateQueuedInput,
 } from "./extensions/conversations.ts";
 
-export { routeInput, RoutingTask, type RoutingResult } from "./extensions/routing.ts";
 export { SubagentsDoc };
 
 // Use registered definitions so document watches retain Durable's versions and migrations.
@@ -73,7 +71,6 @@ export async function createHarness() {
   const registry = createRegistry();
   registry.install(CodingTools);
   registry.install(BackgroundSubagents);
-  registry.install(Routing);
   const sandbox = new CodemodeSandbox({
     memoryLimitBytes: 256 * 1024 * 1024,
     acquireWorker() {
@@ -134,7 +131,7 @@ export async function createHarness() {
     }
     await backfillConversations(tx, root.id, new Map(Object.values(agents.agents).map(agent => [agent.conversationId, agent.name])));
     await configure(tx, root.id, {
-      extensions: [BackgroundSubagents, Routing],
+      extensions: [BackgroundSubagents],
       tools: CoordinatorTools,
       modelTools: null,
       instructions: "",
@@ -179,7 +176,8 @@ export async function submitInput(
   if (!content.trim()) throw new Error("Input must not be empty");
   const root = await harness.root(context);
   if (conversation.id === root.id) {
-    return routeInput(harness, content, context, options.requestId, options.whenBusy);
+    await conversation.submit({ type: "input", content, ...options, whenBusy: options.whenBusy ?? "steer" }, context);
+    return;
   }
   const directory = await harness.snapshot(SubagentsDoc, root.id, context);
   const agent = Object.values(directory?.agents ?? {}).find((agent) => agent.conversationId === conversation.id);
@@ -531,7 +529,7 @@ async function* watchConversation(conversation: Conversation, models: Models | u
   const status = conversationStatus(conversation, models);
   let cached: { newest: number; page: Awaited<ReturnType<typeof historyPage>> } | undefined;
   for await (const view of watchValues(await conversation.watch(context), 5_000)) {
-    // Durable's view is active model context; include raw routing receipts and history too.
+    // Durable's view is active model context; include raw history and custom entries too.
     const newest = view.entries.reduce((id, entry) => Math.max(id, entry.id), 0);
     if (cached?.newest !== newest) cached = { newest, page: await historyPage(conversation, newest, 50, context) };
     const page = cached.page;

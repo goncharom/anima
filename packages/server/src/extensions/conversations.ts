@@ -161,8 +161,7 @@ export function targetsConversation(task: TaskRecord<JsonValue, JsonValue, JsonV
   if (task.state.status === "terminal") return false;
   const input = object(task.input);
   const phase = "checkpoint" in task.state ? object(task.state.checkpoint) : {};
-  return task.kind === "anima.subagent-reporter" && input.conversationId === id && phase.phase === "deliver"
-    || task.kind === "anima.routing" && phase.phase === "dispatch" && phase.conversationId === id;
+  return task.kind === "anima.subagent-reporter" && input.conversationId === id && phase.phase === "deliver";
 }
 
 async function requireIdle(tx: Tx, id: ConversationId) {
@@ -176,9 +175,6 @@ async function requireIdle(tx: Tx, id: ConversationId) {
     for (const task of page.items) {
       if (task.state.status === "terminal") continue;
       if (task.conversationId === id && !task.background || targetsConversation(task, id)) throw busy();
-      // A classification already in flight could still choose this worker.
-      if (task.kind === "anima.routing" && Array.isArray(object(task.input).workers)
-        && (object(task.input).workers as unknown[]).some(worker => object(worker).conversationId === id)) throw busy();
     }
     cursor = page.next;
   } while (cursor !== undefined);
