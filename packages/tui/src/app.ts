@@ -1,5 +1,5 @@
 import type { ConversationInfo } from "@anima/protocol-ts";
-import { getKeybindings, HStack, matchesKey, VStack, type TuiAltScreen } from "@earendil-works/pi-tui";
+import { getKeybindings, HStack, isKeyRelease, isKeyRepeat, matchesKey, VStack, type TuiAltScreen } from "@earendil-works/pi-tui";
 import { ChatPane, COMMANDS } from "./chat-pane.ts";
 import { RemoteClient, type Graph } from "./client.ts";
 import { Dialogs } from "./dialogs.ts";
@@ -54,8 +54,10 @@ export class App {
     this.removeKeys = tui.addInputListener(data => {
       if (tui.hasOverlay()) return;
       if (getKeybindings().matches(data, "app.thinking.toggle")) {
-        this.hideThinking = !this.hideThinking;
-        for (const pane of this.panes.values()) pane.setHideThinking(this.hideThinking);
+        if (!isKeyRelease(data) && !isKeyRepeat(data)) {
+          this.hideThinking = !this.hideThinking;
+          for (const pane of this.panes.values()) pane.setHideThinking(this.hideThinking);
+        }
       } else if (matchesKey(data, "f2")) this.toggleLeft();
       else if (matchesKey(data, "f3")) this.toggleAgents();
       else if (matchesKey(data, "f6")) this.cycleFocus();

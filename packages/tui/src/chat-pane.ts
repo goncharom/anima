@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { BusyBehavior, type ConversationSnapshot } from "@anima/protocol-ts";
 import {
-  CombinedAutocompleteProvider, Editor, getKeybindings, HStack, ScrollView, VStack,
+  CombinedAutocompleteProvider, Editor, getKeybindings, HStack, Loader, ScrollView, VStack,
   type SlashCommand, type TuiAltScreen, type TuiMouseEvent,
 } from "@earendil-works/pi-tui";
 import { object, RemoteClient, queuedInputs, type ConversationState } from "./client.ts";
@@ -57,6 +57,8 @@ export class ChatPane extends VStack {
   readonly dialogs: Dialogs;
   readonly scroll: ScrollView;
   private transcript: Transcript;
+  private workingIndicator: Loader;
+  private workingIndicatorRunning = false;
   private note = "";
   private ready = false;
   private connectionError = "";
@@ -104,10 +106,15 @@ export class ChatPane extends VStack {
     // keeps keyboard search/scroll on the active chat without replacing its scroll state.
     Object.defineProperty(this.scroll, "primary", { get: host.isActive });
     this.addChild(new HStack([
-      { component: button(() => `${host.isActive() ? colors.accent("●") : colors.muted("○")} ${clean(host.title())}${this.working()}${this.queuedCount()}`, host.header), basis: 0, grow: 1 },
+      { component: button(() => `${host.isActive() ? colors.accent("●") : colors.muted("○")} ${clean(host.title())}${this.queuedCount()}`, host.header), basis: 0, grow: 1 },
       { component: button(() => colors.accent(" Agents "), host.agents), basis: 8, shrink: 0 },
     ]), { basis: 1, shrink: 0 });
     this.addChild(this.scroll, { basis: 0, grow: 1, minSize: 1 });
+    this.workingIndicator = new Loader(tui, colors.yellow, colors.muted, "Working…");
+    this.workingIndicator.stop();
+    this.addChild(this.workingIndicator, {
+      basis: "auto", shrink: 0, visible: () => this.isWorking(),
+    });
     this.addChild(this.editor, { basis: "auto", shrink: 1, minSize: 3 });
     this.addChild(line(() => {
       const status = remote.state(id).snapshot?.status;
@@ -120,10 +127,12 @@ export class ChatPane extends VStack {
   follow() {
     if (this.unfollow || this.disposed) return;
     this.ready = false;
+    this.syncWorkingIndicator();
     this.unfollow = this.remote.follow(this.id, (ready, error) => {
       if (this.disposed) return;
       this.ready = ready;
       this.connectionError = ready ? "" : clean(error instanceof Error ? error.message : String(error ?? ""));
+      this.syncWorkingIndicator();
       this.tui.requestRender();
     });
   }
@@ -131,11 +140,13 @@ export class ChatPane extends VStack {
     this.unfollow?.();
     this.unfollow = undefined;
     this.ready = false;
+    this.syncWorkingIndicator();
   }
   update(state: ConversationState) {
     if (this.disposed) return;
     if (this.thinkingChange?.saving === false && state.snapshot !== this.thinkingChange.snapshot) this.thinkingChange = undefined;
     this.transcript.update(state);
+    this.syncWorkingIndicator();
     this.tui.requestRender();
   }
   setHideThinking(hide: boolean) {
@@ -143,9 +154,19 @@ export class ChatPane extends VStack {
     this.hideThinking = hide;
     this.transcript.setHideThinkingBlock(hide);
   }
-  private working() {
+  private isWorking() {
     const live = object(this.remote.state(this.id).snapshot?.docs["pi.live"]);
-    return this.ready && live.run !== undefined ? colors.yellow(" · Working") : "";
+    return this.ready && live.run !== undefined;
+  }
+  private syncWorkingIndicator() {
+    const working = this.isWorking();
+    if (working === this.workingIndicatorRunning) return;
+    this.workingIndicatorRunning = working;
+    if (working) this.workingIndicator.start();
+    else {
+      this.workingIndicator.stop();
+      this.tui.requestRender();
+    }
   }
   private queuedCount() {
     const count = queuedInputs(this.remote.state(this.id)).length;
@@ -301,5 +322,6 @@ export class ChatPane extends VStack {
     this.disposed = true;
     this.dialogs.cancel();
     this.detach();
+    this.workingIndicator.stop();
   }
 }
