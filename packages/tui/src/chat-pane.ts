@@ -4,7 +4,7 @@ import {
   CombinedAutocompleteProvider, Editor, getKeybindings, HStack, ScrollView, VStack,
   type SlashCommand, type TuiAltScreen, type TuiMouseEvent,
 } from "@earendil-works/pi-tui";
-import { RemoteClient, queuedInputs, type ConversationState } from "./client.ts";
+import { object, RemoteClient, queuedInputs, type ConversationState } from "./client.ts";
 import { Dialogs } from "./dialogs.ts";
 import { Transcript } from "./transcript.ts";
 import { button, clean, colors, editorTheme, line } from "./ui.ts";
@@ -63,6 +63,7 @@ export class ChatPane extends VStack {
   private unfollow?: () => void;
   private sending = false;
   private expanded = false;
+  private hideThinking = false;
   private pending?: { content: string; mode: BusyBehavior; requestId: string };
   private thinkingChange?: { snapshot?: ConversationSnapshot; saving: boolean };
   private disposed = false;
@@ -103,7 +104,7 @@ export class ChatPane extends VStack {
     // keeps keyboard search/scroll on the active chat without replacing its scroll state.
     Object.defineProperty(this.scroll, "primary", { get: host.isActive });
     this.addChild(new HStack([
-      { component: button(() => `${host.isActive() ? colors.accent("●") : colors.muted("○")} ${clean(host.title())}${this.queuedCount()}`, host.header), basis: 0, grow: 1 },
+      { component: button(() => `${host.isActive() ? colors.accent("●") : colors.muted("○")} ${clean(host.title())}${this.working()}${this.queuedCount()}`, host.header), basis: 0, grow: 1 },
       { component: button(() => colors.accent(" Agents "), host.agents), basis: 8, shrink: 0 },
     ]), { basis: 1, shrink: 0 });
     this.addChild(this.scroll, { basis: 0, grow: 1, minSize: 1 });
@@ -137,17 +138,27 @@ export class ChatPane extends VStack {
     this.transcript.update(state);
     this.tui.requestRender();
   }
+  setHideThinking(hide: boolean) {
+    if (this.hideThinking === hide) return;
+    this.hideThinking = hide;
+    this.transcript.setHideThinkingBlock(hide);
+  }
+  private working() {
+    const live = object(this.remote.state(this.id).snapshot?.docs["pi.live"]);
+    return this.ready && live.run !== undefined ? colors.yellow(" · Working") : "";
+  }
   private queuedCount() {
     const count = queuedInputs(this.remote.state(this.id)).length;
     return count ? colors.yellow(` · ${count} queued`) : "";
   }
   private footer() {
+    const visibility = `thinking blocks ${this.hideThinking ? "hidden" : "visible"} (Ctrl+T)`;
     const status = this.remote.state(this.id).snapshot?.status;
-    if (!status) return colors.muted("Waiting for server status…");
+    if (!status) return colors.muted(`${visibility} · Waiting for server status…`);
     const context = status.contextWindow ? `~${(status.contextTokens / status.contextWindow * 100).toFixed(1)}% context` : "context —";
     const thinking = status.thinkingLevel !== undefined && status.supportedThinkingLevels.some(level => level !== "off")
       ? ` · thinking ${clean(status.thinkingLevel)} (Shift+Tab)` : "";
-    return colors.muted(`${context} | ${status.model ? `${clean(status.model.provider)}/${clean(status.model.modelId)}` : "no model"}${thinking}`);
+    return colors.muted(`${visibility} · ${context} | ${status.model ? `${clean(status.model.provider)}/${clean(status.model.modelId)}` : "no model"}${thinking}`);
   }
   private notice() { return this.ready ? this.note : colors.yellow(`Reconnecting…${this.connectionError ? ` ${this.connectionError}` : ""}`); }
   error(error: unknown) {

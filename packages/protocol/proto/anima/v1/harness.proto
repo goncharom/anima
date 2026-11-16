@@ -153,6 +153,8 @@ message ConversationInfo {
   bool archived = 3;
   // Absent for human-created coordinators; set to the spawning coordinator for workers.
   optional string owner_conversation_id = 4;
+  // Assignment title for a subagent, absent on older conversations.
+  optional string task_title = 5;
 }
 
 message WatchConversationsRequest {}

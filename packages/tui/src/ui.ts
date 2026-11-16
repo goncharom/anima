@@ -17,6 +17,7 @@ export function initKeys() {
     "app.exit": { defaultKeys: "ctrl+d" },
     "app.model.select": { defaultKeys: "ctrl+l" },
     "app.thinking.cycle": { defaultKeys: "shift+tab" },
+    "app.thinking.toggle": { defaultKeys: "ctrl+t" },
     "app.tools.expand": { defaultKeys: "ctrl+o" },
     "app.message.followUp": { defaultKeys: windowsKeys ? "ctrl+q" : "alt+enter" },
     "app.message.dequeue": { defaultKeys: windowsKeys ? "alt+q" : "alt+up" },

@@ -21,6 +21,7 @@ export type ConversationInfo = {
   name: string;
   archived: boolean;
   ownerConversationId?: string;
+  taskTitle?: string;
 };
 
 /** Display metadata and the spawning conversation, never a second copy of runtime state. */
@@ -44,6 +45,14 @@ export function displayName(name: string): string {
     throw new ConnectError("Name must be 1–200 characters without control characters", Code.InvalidArgument);
   }
   return name;
+}
+
+export function displayTaskTitle(title: string): string {
+  title = title.trim();
+  if (!title || title.length > 120 || /[\x00-\x1f\x7f-\x9f]/.test(title)) {
+    throw new ConnectError("Task title must be 1–120 characters without control characters", Code.InvalidArgument);
+  }
+  return title;
 }
 
 /** Same server filesystem/environment as coding tools. */

@@ -46,6 +46,7 @@ export class Transcript extends Container {
   private messages = new Map<string, Component>();
   private tools = new Map<string, ToolCard>();
   private partial = new AssistantMessageComponent();
+  private hideThinking = false;
   private expanded = false;
   private loadOlder: () => void;
   private activate: () => void;
@@ -60,6 +61,16 @@ export class Transcript extends Container {
   override handleMouse(event: TuiMouseEvent) {
     if (event.type === "press" || event.type === "click") this.activate();
     return super.handleMouse(event);
+  }
+
+  setHideThinkingBlock(hide: boolean) {
+    if (this.hideThinking === hide) return;
+    this.hideThinking = hide;
+    for (const message of this.messages.values()) {
+      if (message instanceof AssistantMessageComponent) message.setHideThinkingBlock(hide);
+    }
+    this.partial.setHideThinkingBlock(hide);
+    this.ui.requestRender();
   }
 
   expand(expanded: boolean) {
@@ -125,7 +136,7 @@ export class Transcript extends Container {
             });
           } else this.addMessage(key, () => new UserMessageComponent(clean(contentText(message.content))));
         } else if (message.role === "assistant") {
-          this.addMessage(key, () => new AssistantMessageComponent(cleanData(message)));
+          this.addMessage(key, () => new AssistantMessageComponent(cleanData(message), this.hideThinking));
           for (const call of message.content) {
             if (call.type !== "toolCall") continue;
             const tool = this.tool(call, cwd);

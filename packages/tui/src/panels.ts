@@ -1,5 +1,5 @@
 import {
-  Container, getKeybindings, HStack, ScrollView, VStack,
+  Container, getKeybindings, HStack, MouseRegion, ScrollView, truncateToWidth, VStack,
   type Component, type Focusable, type TuiMouseEvent, type TuiMouseEventResult,
 } from "@earendil-works/pi-tui";
 import type { ConversationInfo } from "@anima/protocol-ts";
@@ -36,12 +36,14 @@ export class ConversationList extends ScrollView implements Focusable {
   private connected = false;
   private select: (id: string) => void;
   private empty: string;
-  constructor(select: (id: string) => void, empty: string) {
+  private showTaskTitle: boolean;
+  constructor(select: (id: string) => void, empty: string, showTaskTitle = false) {
     const rows = new Container();
     super(rows, { overscroll: "contain" });
     this.rows = rows;
     this.select = select;
     this.empty = empty;
+    this.showTaskTitle = showTaskTitle;
     Object.defineProperty(this, "primary", { get: () => this.focused });
   }
   update(items: ConversationInfo[], selected: string, busy: Set<string>, connected: boolean) {
@@ -54,15 +56,43 @@ export class ConversationList extends ScrollView implements Focusable {
     this.connected = connected;
     this.rebuild();
   }
+  override updateLayout(contentHeight: number, viewportHeight: number, requestRender: () => void) {
+    super.updateLayout(contentHeight, viewportHeight, requestRender);
+    if (!this.showTaskTitle) return;
+    const index = this.items.findIndex(item => item.conversationId === this.cursor);
+    if (index < 0) return;
+    const rowTop = index * 2;
+    const rowBottom = rowTop + 2;
+    const visibleHeight = Math.max(1, this.viewportHeight);
+    if (visibleHeight < 2) this.scrollTo(rowTop);
+    else if (rowTop < this.scrollTop) this.scrollTo(rowTop);
+    else if (rowBottom > this.scrollTop + visibleHeight) this.scrollTo(rowBottom - visibleHeight);
+  }
   private rebuild() {
     this.rows.clear();
     for (const info of this.items) {
       const id = info.conversationId;
-      this.rows.addChild(button(() => {
+      const label = () => {
         const dot = !this.connected ? colors.muted("○") : this.busy.has(id) ? colors.yellow("●") : colors.green("●");
         const highlighted = this.focused ? id === this.cursor : id === this.selected;
         return `${highlighted ? colors.accent("›") : " "} ${dot} ${highlighted ? colors.accent(clean(info.name)) : clean(info.name)}`;
-      }, () => { this.cursor = id; this.select(id); }));
+      };
+      const select = () => { this.cursor = id; this.select(id); };
+      if (!this.showTaskTitle) this.rows.addChild(button(label, select));
+      else {
+        const row: Component = {
+          render: width => [
+            truncateToWidth(label(), width),
+            truncateToWidth(colors.muted(`    ${clean(info.taskTitle ?? "")}`), width),
+          ],
+          invalidate() {},
+        };
+        this.rows.addChild(new MouseRegion(row, event => {
+          if (event.type !== "click" || event.button !== "left") return;
+          select();
+          return { handled: true };
+        }));
+      }
     }
     if (!this.items.length) this.rows.addChild(line(colors.muted(this.empty)));
   }
@@ -75,8 +105,13 @@ export class ConversationList extends ScrollView implements Focusable {
     else if (kb.matches(data, "tui.select.confirm")) { if (this.cursor) this.select(this.cursor); return; }
     else return;
     this.cursor = this.items[next]?.conversationId ?? "";
-    if (next < this.scrollTop) this.scrollTo(next);
-    else if (next >= this.scrollTop + this.viewportHeight) this.scrollTo(next - this.viewportHeight + 1);
+    const rowHeight = this.showTaskTitle ? 2 : 1;
+    const rowTop = next * rowHeight;
+    const rowBottom = rowTop + rowHeight;
+    const viewportHeight = Math.max(1, this.viewportHeight);
+    if (rowHeight > viewportHeight) this.scrollTo(rowTop);
+    else if (rowTop < this.scrollTop) this.scrollTo(rowTop);
+    else if (rowBottom > this.scrollTop + viewportHeight) this.scrollTo(rowBottom - viewportHeight);
     this.rebuild();
   }
 }

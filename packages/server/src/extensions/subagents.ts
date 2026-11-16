@@ -13,7 +13,7 @@ import {
 } from "@earendil-works/pi-durable";
 import { CodingTools } from "@earendil-works/pi-durable/tools";
 import { ConversationReporter, createReporter } from "./conversation-reporter.ts";
-import { ConversationsDoc, displayName, registerConversation } from "./conversations.ts";
+import { ConversationsDoc, displayName, displayTaskTitle, registerConversation } from "./conversations.ts";
 import { COORDINATOR_PROMPT, workerPrompt } from "../prompts.ts";
 
 /** Extension references select by name; each harness installs its own codemode sandbox. */
@@ -70,23 +70,27 @@ const subagent = defineTool({
   description:
     "Start a background subagent for an independent task. Each call starts a new agent and returns immediately. " +
     "For related follow-ups, reuse an existing conversation with send_message instead. " +
-    "Give it a short name and a self-contained message with all context it needs. It inherits your working directory " +
+    "Give it a short name, a short task title, and a self-contained message with all context it needs. It inherits your working directory " +
     "and starts with openai/gpt-6-luna at high thinking with coding tools, but cannot create subagents. Its final answer (or failure) will " +
     "automatically arrive here as a follow-up message. The result includes its conversationId.",
   parameters: Type.Object({
     name: Type.String({ minLength: 1, description: "A short label for this subagent." }),
+    taskTitle: Type.String({ minLength: 1, maxLength: 120, description: "A short plain-text title for its assignment." }),
     message: Type.String({ minLength: 1, description: "The complete task and relevant context for the subagent." }),
   }),
   replay: "safe",
-  execute: async ({ name, message }, api, context) => {
+  execute: async ({ name, taskTitle, message }, api, context) => {
     name = displayName(name);
+    taskTitle = displayTaskTitle(taskTitle);
     const conversationId = await api.commit(async (tx) => {
       const launch = await tx.doc(Launch, api.taskId);
       if (launch.conversationId !== undefined) return launch.conversationId;
 
       const anchor = await tx.createTask(Anchor, null, { ownership: { kind: "conversation" }, background: true });
       const child = await tx.createConversation({ ownership: { kind: "task", taskId: anchor } });
-      (await registerConversation(tx, child)).name = name;
+      const info = await registerConversation(tx, child);
+      info.name = name;
+      info.taskTitle = taskTitle;
       await configure(tx, child.id, {
         ...WorkerCapabilities,
         model: { provider: "openai", modelId: "gpt-6-luna" },
@@ -115,14 +119,17 @@ const sendMessage = defineTool({
   name: "send_message",
   description:
     "Send a follow-up or correction to one of your existing subagents. Reuse its conversationId rather than " +
-    "starting another agent for related work. Returns immediately; the answer is automatically reported here. " +
+    "starting another agent for related work. An optional taskTitle immediately changes its displayed assignment title; omit it to retain the current title. " +
+    "Returns immediately; the answer is automatically reported here. " +
     "A busy child receives this at its next tool boundary (not after its entire assignment).",
   parameters: Type.Object({
     conversationId: Type.String({ minLength: 1, description: "An existing subagent conversationId returned by subagent." }),
+    taskTitle: Type.Optional(Type.String({ minLength: 1, maxLength: 120, description: "Optional new short title for the worker's current assignment; omission retains its existing title." })),
     message: Type.String({ minLength: 1, description: "The follow-up instruction and relevant context." }),
   }),
   replay: "safe",
-  execute: async ({ conversationId, message }, api, context) => {
+  execute: async ({ conversationId, message, taskTitle }, api, context) => {
+    if (taskTitle !== undefined) taskTitle = displayTaskTitle(taskTitle);
     const reporterTaskId = await api.commit(async (tx) => {
       const launch = await tx.doc(Launch, api.taskId);
       // Memoize the reporter too, using a stable request ID for safe replay.
@@ -130,8 +137,10 @@ const sendMessage = defineTool({
       const agent = Object.values(agents.agents).find((candidate) => String(candidate.conversationId) === conversationId);
       if (agent === undefined) throw new Error("Destination is not one of your subagents");
       const requestId = `subagent-message:${api.taskId}`;
+      const info = (await tx.doc(ConversationsDoc)).conversations[String(agent.conversationId)];
+      if (taskTitle !== undefined && info !== undefined) info.taskTitle = taskTitle;
       if (launch.reporterTaskId !== undefined) return launch.reporterTaskId;
-      const name = (await tx.doc(ConversationsDoc)).conversations[String(agent.conversationId)]?.name ?? agent.name;
+      const name = info?.name ?? agent.name;
       const reporter = await createReporter(tx, {
         name, conversationId: agent.conversationId, message, requestId,
       });
@@ -144,12 +153,12 @@ const sendMessage = defineTool({
   },
 });
 
-/** Every human-created conversation has the same delegation-only capabilities. */
+/** Delegation tools available alongside the coordinator's coding tools. */
 export const CoordinatorTools = [subagent, sendMessage];
 
 export function coordinatorCapabilities(instructions?: string): AgentChange {
   return {
-    extensions: [BackgroundSubagents], tools: CoordinatorTools, modelTools: null,
+    extensions: [...WorkerCapabilities.extensions, BackgroundSubagents], tools: null, modelTools: null,
     instructions: instructions ? `${COORDINATOR_PROMPT}\n\nAdditional human instructions:\n${instructions}` : COORDINATOR_PROMPT,
   };
 }

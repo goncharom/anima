@@ -1,5 +1,5 @@
 import type { ConversationInfo } from "@anima/protocol-ts";
-import { HStack, matchesKey, VStack, type TuiAltScreen } from "@earendil-works/pi-tui";
+import { getKeybindings, HStack, matchesKey, VStack, type TuiAltScreen } from "@earendil-works/pi-tui";
 import { ChatPane, COMMANDS } from "./chat-pane.ts";
 import { RemoteClient, type Graph } from "./client.ts";
 import { Dialogs } from "./dialogs.ts";
@@ -26,6 +26,7 @@ export class App {
   private busy = new Set<string>();
   private connections = new Set<string>();
   private connectionError = "";
+  private hideThinking = false;
   private note = "";
   private stopped = false;
   private closing?: Promise<void>;
@@ -40,7 +41,7 @@ export class App {
       collapse: () => this.toggleLeft(), select: id => this.selectHuman(id),
       command: name => void this.act(() => this.command(this.mainPane(), name)),
     });
-    this.agentList = new ConversationList(id => this.selectWorker(id), "No subagents yet");
+    this.agentList = new ConversationList(id => this.selectWorker(id), "No subagents yet", true);
     this.agents = new SidePanel(
       () => this.worker ? "‹ Subagents" : `Subagents (${this.workers().length})`,
       () => this.showAgentList(), () => this.toggleAgents(),
@@ -52,7 +53,10 @@ export class App {
     tui.setLayoutRoot(this.workspace);
     this.removeKeys = tui.addInputListener(data => {
       if (tui.hasOverlay()) return;
-      if (matchesKey(data, "f2")) this.toggleLeft();
+      if (getKeybindings().matches(data, "app.thinking.toggle")) {
+        this.hideThinking = !this.hideThinking;
+        for (const pane of this.panes.values()) pane.setHideThinking(this.hideThinking);
+      } else if (matchesKey(data, "f2")) this.toggleLeft();
       else if (matchesKey(data, "f3")) this.toggleAgents();
       else if (matchesKey(data, "f6")) this.cycleFocus();
       else if (matchesKey(data, "escape") && tui.getFocusedComponent() === this.agentList) this.toggleAgents();
@@ -104,6 +108,7 @@ export class App {
         restoreFocus: () => this.restoreFocus(this.panes.get(id)),
         exit: () => this.onExit(),
       });
+      pane.setHideThinking(this.hideThinking);
       this.panes.set(id, pane);
     }
     return pane;
