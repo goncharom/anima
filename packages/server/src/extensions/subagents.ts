@@ -14,6 +14,7 @@ import {
 import { CodingTools } from "@earendil-works/pi-durable/tools";
 import { ConversationReporter, createReporter } from "./conversation-reporter.ts";
 import { ConversationsDoc, displayName, registerConversation } from "./conversations.ts";
+import { COORDINATOR_PROMPT, workerPrompt } from "../prompts.ts";
 
 /** Extension references select by name; each harness installs its own codemode sandbox. */
 export const WorkerCapabilities = {
@@ -69,8 +70,8 @@ const subagent = defineTool({
   description:
     "Start a background subagent for an independent task. Each call starts a new agent and returns immediately. " +
     "For related follow-ups, reuse an existing conversation with send_message instead. " +
-    "Give it a short name and a self-contained message with all context it needs. It inherits your model, " +
-    "working directory, and coding tools, but cannot create subagents. Its final answer (or failure) will " +
+    "Give it a short name and a self-contained message with all context it needs. It inherits your working directory " +
+    "and starts with openai/gpt-6-luna at high thinking with coding tools, but cannot create subagents. Its final answer (or failure) will " +
     "automatically arrive here as a follow-up message. The result includes its conversationId.",
   parameters: Type.Object({
     name: Type.String({ minLength: 1, description: "A short label for this subagent." }),
@@ -87,13 +88,11 @@ const subagent = defineTool({
       const child = await tx.createConversation({ ownership: { kind: "task", taskId: anchor } });
       (await registerConversation(tx, child)).name = name;
       await configure(tx, child.id, {
-        thinkingLevel: "high",
         ...WorkerCapabilities,
+        model: { provider: "openai", modelId: "gpt-6-luna" },
+        thinkingLevel: "high",
         modelTools: null,
-        instructions:
-          `You are the background subagent ${JSON.stringify(name)}. Complete the parent's task independently. ` +
-          "Do not delegate to other agents. Your final answer is automatically reported to the parent. " +
-          "Include your findings, changes, and any limitations in that answer.",
+        instructions: workerPrompt(name),
       });
       const reporter = await createReporter(tx, { name, conversationId: child.id, message });
       (await tx.doc(SubagentsDoc, api.conversationId)).agents[String(reporter)] = {
@@ -145,8 +144,15 @@ const sendMessage = defineTool({
   },
 });
 
-/** Exact root allowlist: delegation only, with no file, shell, or tool-discovery capability. */
+/** Every human-created conversation has the same delegation-only capabilities. */
 export const CoordinatorTools = [subagent, sendMessage];
+
+export function coordinatorCapabilities(instructions?: string): AgentChange {
+  return {
+    extensions: [BackgroundSubagents], tools: CoordinatorTools, modelTools: null,
+    instructions: instructions ? `${COORDINATOR_PROMPT}\n\nAdditional human instructions:\n${instructions}` : COORDINATOR_PROMPT,
+  };
+}
 
 /** Launch non-recursive background children and automatically report their answers. */
 export const BackgroundSubagents: Extension = defineExtension({

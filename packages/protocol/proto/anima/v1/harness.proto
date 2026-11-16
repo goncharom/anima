@@ -6,7 +6,6 @@ import "google/protobuf/struct.proto";
 
 // HarnessService exposes agent commands and a reconnectable snapshot stream.
 service HarnessService {
-  rpc GetRootConversation(GetRootConversationRequest) returns (GetRootConversationResponse);
   rpc CreateConversation(CreateConversationRequest) returns (CreateConversationResponse);
   rpc SubmitInput(SubmitInputRequest) returns (SubmitInputResponse);
   rpc WatchConversation(WatchConversationRequest) returns (stream WatchConversationResponse);
@@ -19,27 +18,18 @@ service HarnessService {
   rpc ListDirectories(ListDirectoriesRequest) returns (ListDirectoriesResponse);
   rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
   rpc UpdateQueuedInput(UpdateQueuedInputRequest) returns (UpdateQueuedInputResponse);
-  rpc ForkConversation(ForkConversationRequest) returns (ForkConversationResponse);
 }
 
 // IDs are opaque strings, scoped to the server's database. They remain valid
 // across restarts using the same database; resetting it invalidates existing IDs.
 message CreateConversationRequest {
-  // Absent: use the root conversation's working directory.
+  // Absent: use the server's working directory.
   optional string cwd = 1;
   optional string instructions = 2;
   optional string name = 3;
 }
 
 message CreateConversationResponse {
-  string conversation_id = 1;
-}
-
-// Resolve the main conversation without creating a new independent conversation.
-message GetRootConversationRequest {}
-
-message GetRootConversationResponse {
-  // The same root ID across reconnects/restarts using the same database.
   string conversation_id = 1;
 }
 
@@ -57,8 +47,7 @@ message SubmitInputRequest {
   string content = 2;
   // Reusing a nonempty ID in this conversation does not send the input twice.
   optional string request_id = 3;
-  // Input goes to the specified conversation. Unspecified means steer for root
-  // and root's subagents, or queue for independent conversations.
+  // Input goes to the specified conversation. Unspecified means steer.
   BusyBehavior when_busy = 4;
 }
 
@@ -152,6 +141,9 @@ message ConversationStatus {
   uint32 context_tokens = 4;
   // Zero when the model is unknown. Context usage is approximate.
   uint32 context_window = 5;
+  optional string thinking_level = 6;
+  // Ordered choices for the current model. Empty when its capabilities are unknown.
+  repeated string supported_thinking_levels = 7;
 }
 
 // Display metadata only. Archive does not cancel or delete a conversation.
@@ -159,9 +151,8 @@ message ConversationInfo {
   string conversation_id = 1;
   string name = 2;
   bool archived = 3;
-  optional string parent_conversation_id = 4;
-  optional string fork_entry_id = 5;
-  optional string owner_conversation_id = 6;
+  // Absent for human-created coordinators; set to the spawning coordinator for workers.
+  optional string owner_conversation_id = 4;
 }
 
 message WatchConversationsRequest {}
@@ -174,12 +165,14 @@ message WatchConversationsResponse {
 message UpdateConversationRequest {
   string conversation_id = 1;
   optional string name = 2;
-  // Root cannot be archived.
   optional bool archived = 3;
   // Requires idle execution with no queued/pending delivery. Does not move files.
   optional string cwd = 4;
   // Applies to subsequent model requests.
   ModelRef model = 5;
+  // Applies to subsequent model requests. Absent leaves the level unchanged,
+  // except that changing models clamps the current level to the new model.
+  optional string thinking_level = 6;
 }
 
 message UpdateConversationResponse {}
@@ -233,17 +226,4 @@ message UpdateQueuedInputResponse {
   // Exact updated/withdrawn content, for restoring withdrawn text to the editor.
   string content = 1;
   BusyBehavior when_busy = 2;
-}
-
-message ForkConversationRequest {
-  string conversation_id = 1;
-  // Inclusive visible entry: inherit history through here. Absent creates an empty
-  // independent branch using the source's current agent preferences.
-  optional string entry_id = 2;
-  optional string name = 3;
-  optional string cwd = 4;
-}
-
-message ForkConversationResponse {
-  string conversation_id = 1;
 }

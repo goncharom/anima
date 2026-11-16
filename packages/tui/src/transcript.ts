@@ -3,9 +3,9 @@ import {
   AssistantMessageComponent, getMarkdownTheme, ToolExecutionComponent, UserMessageComponent, type ToolRenderers,
 } from "@earendil-works/pi-coding-agent";
 import {
-  Container, getCapabilities, getImageDimensions, imageFallback, Markdown, Text, type Component, type TUI,
+  Container, getCapabilities, getImageDimensions, imageFallback, Markdown, Text, type Component, type TUI, type TuiMouseEvent,
 } from "@earendil-works/pi-tui";
-import { object, type ConversationState, type Entry } from "./client.ts";
+import { object, type ConversationState } from "./client.ts";
 import { button, clean, cleanData, colors, line } from "./ui.ts";
 
 type ToolCard = {
@@ -48,11 +48,18 @@ export class Transcript extends Container {
   private partial = new AssistantMessageComponent();
   private expanded = false;
   private loadOlder: () => void;
+  private activate: () => void;
 
-  constructor(ui: TUI, loadOlder: () => void) {
+  constructor(ui: TUI, loadOlder: () => void, activate: () => void) {
     super();
     this.ui = ui;
     this.loadOlder = loadOlder;
+    this.activate = activate;
+  }
+
+  override handleMouse(event: TuiMouseEvent) {
+    if (event.type === "press" || event.type === "click") this.activate();
+    return super.handleMouse(event);
   }
 
   expand(expanded: boolean) {
@@ -98,6 +105,8 @@ export class Transcript extends Container {
       if (!shown.has(id)) { this.addChild(tool.component); shown.add(id); }
     };
     for (const entry of [...state.entries.values()].sort((a, b) => a.id - b.id)) {
+      // Worker reports stay in model context; the coordinator's synthesis is user-facing.
+      if (entry.kind === "anima.agent-report") continue;
       const data = object(entry.data);
       if (entry.kind === "pi.compaction" || entry.kind === "pi.reset") {
         this.addMessage(`${entry.id}:context`, () => new Text(colors.muted(entry.kind === "pi.reset" ? "Context reset" : "Context compacted"), 1, 1));
@@ -109,9 +118,9 @@ export class Transcript extends Container {
           if (data.origin === "agent") {
             this.addMessage(key, () => {
               const group = new Container();
-              group.addChild(new Text(colors.accent(entry.kind === "anima.agent-report"
-                ? `Agent report${data.sourceName ? ` · ${clean(String(data.sourceName))}` : ""}` : "Delegated instruction"), 1, 0));
-              group.addChild(new Markdown(clean(contentText(message.content)), 1, 1, getMarkdownTheme()));
+              group.addChild(new Text(colors.accent("Delegated instruction"), 1, 0));
+              group.addChild(new Markdown(clean(entry.kind === "anima.agent-message" && typeof data.content === "string"
+                ? data.content : contentText(message.content)), 1, 1, getMarkdownTheme()));
               return group;
             });
           } else this.addMessage(key, () => new UserMessageComponent(clean(contentText(message.content))));
@@ -175,12 +184,4 @@ export class Transcript extends Container {
     if (!message) { message = create(); this.messages.set(key, message); }
     this.addChild(message);
   }
-}
-
-/** Used by the tree adapter; reports remain visibly distinct from human messages. */
-export function userText(entry: Entry): string | undefined {
-  const origin = object(entry.data).origin;
-  if (origin === "agent" || entry.kind !== "pi.user" && origin !== "user") return;
-  const message = entry.model?.find(message => message.role === "user");
-  return message ? contentText(message.content) : undefined;
 }

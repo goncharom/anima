@@ -1,7 +1,5 @@
 import { BusyBehavior } from "@anima/protocol-ts";
-import {
-  copyToClipboard, DynamicBorder, getSelectListTheme, TreeSelectorComponent, type SessionTreeNode,
-} from "@earendil-works/pi-coding-agent";
+import { DynamicBorder, getSelectListTheme } from "@earendil-works/pi-coding-agent";
 import {
   CancellableLoader, Container, Editor, fuzzyFilter, getKeybindings, Input, isFocusable, matchesKey,
   SelectList, type Component, type Focusable, type OverlayHandle, type OverlayOptions, type SelectItem, type TUI,
@@ -199,44 +197,5 @@ export class Dialogs {
   }
   editQueue(item: QueuedInput, apply: (change: QueueChange) => Promise<void>) {
     return this.show<boolean>(done => new Pane("Edit queued input", new QueueEditor(this.ui, item, apply, () => done(true)), () => done()));
-  }
-  tree(nodes: SessionTreeNode[], current: string) {
-    return this.show<string>(done => {
-      let selector: TreeSelectorComponent;
-      let rows = 0;
-      let focused = false;
-      const rebuild = () => {
-        const selected = selector?.getTreeList().getSelectedNode()?.entry.id;
-        const query = selector?.getTreeList().getSearchQuery() ?? "";
-        rows = this.ui.terminal.rows;
-        selector = new TreeSelectorComponent(nodes, current, Math.max(10, (Math.floor(rows * 0.9) - 5) * 2),
-          value => done(value), () => done(), undefined, selected, "default");
-        selector.onCopy = text => { if (text) void copyToClipboard(text).catch(this.error); };
-        selector.focused = focused;
-        for (const char of query) selector.handleInput(char);
-      };
-      rebuild();
-      return {
-        get focused() { return focused; },
-        set focused(value: boolean) { focused = value; selector.focused = value; },
-        render: width => {
-          if (rows !== this.ui.terminal.rows) rebuild();
-          if (rows < 12) return line("Tree requires at least 12 terminal rows.").render(width);
-          const list = selector.getTreeList();
-          return [
-            ...new DynamicBorder(colors.accent).render(width),
-            ...line(colors.accent("History tree")).render(width),
-            ...line(colors.muted(`Search: ${clean(list.getSearchQuery())}`)).render(width),
-            ...list.render(width),
-            ...new DynamicBorder(colors.accent).render(width),
-          ];
-        },
-        handleInput: data => {
-          if (matchesKey(data, "escape") || matchesKey(data, "ctrl+c")) done();
-          else if (rows >= 12) selector.handleInput(data);
-        },
-        invalidate() { selector.invalidate(); },
-      } satisfies Component & Focusable;
-    });
   }
 }

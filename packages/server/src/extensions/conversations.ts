@@ -5,10 +5,11 @@ import { BusyBehavior, type UpdateConversationRequest, type UpdateQueuedInputReq
 import { Code, ConnectError } from "@connectrpc/connect";
 import type { Context, JsonValue } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
-import type { AssistantMessage, Models } from "@earendil-works/pi-ai";
+import type { AssistantMessage, Models, ModelThinkingLevel } from "@earendil-works/pi-ai";
+import { clampThinkingLevel, getSupportedThinkingLevels } from "@earendil-works/pi-ai/models";
 import { calculateContextTokens, estimateMessageTokens } from "@earendil-works/pi-ai/utils/estimate";
 import {
-  configure, defineDoc, InboxDoc, LiveDoc,
+  AgentDoc, configure, defineDoc, InboxDoc, LiveDoc,
   type Conversation, type ConversationId, type ConversationRecord, type ContextView,
   type Cursor, type Harness, type TaskRecord, type Tx,
 } from "@earendil-works/pi-durable";
@@ -19,12 +20,10 @@ export type ConversationInfo = {
   conversationId: string;
   name: string;
   archived: boolean;
-  parentConversationId?: string;
-  forkEntryId?: string;
   ownerConversationId?: string;
 };
 
-/** Only display metadata and immutable ancestry, never a second copy of runtime state. */
+/** Display metadata and the spawning conversation, never a second copy of runtime state. */
 export const ConversationsDoc = defineDoc<{ conversations: Record<string, ConversationInfo> }>({
   kind: "anima.conversations", version: 1, scope: "session",
   initial: () => ({ conversations: {} }), checkpointWhen: () => false,
@@ -34,9 +33,6 @@ export async function registerConversation(tx: Tx, conversation: ConversationRec
   const directory = await tx.doc(ConversationsDoc);
   directory.conversations[String(conversation.id)] ??= {
     conversationId: String(conversation.id), name: `Conversation ${conversation.id}`, archived: false,
-    ...(conversation.parent ? {
-      parentConversationId: String(conversation.parent.conversationId), forkEntryId: String(conversation.parent.at),
-    } : {}),
     ...(conversation.owner ? { ownerConversationId: String(conversation.owner.conversationId) } : {}),
   };
   return directory.conversations[String(conversation.id)];
@@ -48,23 +44,6 @@ export function displayName(name: string): string {
     throw new ConnectError("Name must be 1–200 characters without control characters", Code.InvalidArgument);
   }
   return name;
-}
-
-export async function backfillConversations(tx: Tx, rootId: ConversationId, names: Map<ConversationId, string>) {
-  const directory = await tx.doc(ConversationsDoc);
-  let cursor: Cursor | undefined;
-  do {
-    const page = await tx.scanConversations({}, 100, cursor);
-    for (const conversation of page.items) {
-      const missing = directory.conversations[String(conversation.id)] === undefined;
-      const info = await registerConversation(tx, conversation);
-      if (missing) {
-        info.name = conversation.id === rootId ? "Chief of staff" : names.get(conversation.id) ?? info.name;
-      }
-      if (conversation.id === rootId) info.archived = false;
-    }
-    cursor = page.next;
-  } while (cursor !== undefined);
 }
 
 /** Same server filesystem/environment as coding tools. */
@@ -130,14 +109,16 @@ function fileError(error: unknown) {
 }
 
 export async function updateConversation(
-  conversation: Conversation, rootId: ConversationId,
+  conversation: Conversation,
   request: UpdateConversationRequest, models: Models | undefined, context: Context,
 ) {
   const name = request.name === undefined ? undefined : displayName(request.name);
-  if (request.archived && conversation.id === rootId) {
-    throw new ConnectError("The chief of staff cannot be archived", Code.FailedPrecondition);
-  }
   const cwd = request.cwd === undefined ? undefined : await directoryPath(request.cwd, context);
+  const requestedThinking = request.thinkingLevel === undefined ? undefined : thinkingLevel(request.thinkingLevel);
+  const changingThinking = request.model !== undefined || requestedThinking !== undefined;
+  if (changingThinking && !models) {
+    throw new ConnectError("The server model catalog is unavailable", Code.FailedPrecondition);
+  }
   if (request.model) {
     if (!models) throw new ConnectError("The server model catalog is unavailable", Code.FailedPrecondition);
     const available = await models.getAvailableOfType("chat", request.model.provider);
@@ -147,13 +128,31 @@ export async function updateConversation(
   }
   await conversation.commit(async tx => {
     if (cwd !== undefined) await requireIdle(tx, conversation.id);
+    let effectiveThinking: ModelThinkingLevel | undefined;
+    if (changingThinking) {
+      const agent = await tx.doc(AgentDoc, conversation.id);
+      const ref = request.model ?? agent.model;
+      const model = ref && models!.getModelOfType("chat", ref.provider, ref.modelId);
+      if (!model) throw new ConnectError("Conversation chat model is unavailable", Code.FailedPrecondition);
+      effectiveThinking = clampThinkingLevel(model, requestedThinking ?? agent.thinkingLevel ?? "off");
+    }
     const info = (await tx.doc(ConversationsDoc)).conversations[String(conversation.id)];
     if (name !== undefined) info.name = name;
     if (request.archived !== undefined) info.archived = request.archived;
     await configure(tx, conversation.id, {
       cwd, model: request.model && { provider: request.model.provider, modelId: request.model.modelId },
+      thinkingLevel: effectiveThinking,
     });
   }, context);
+}
+
+function thinkingLevel(value: string): ModelThinkingLevel {
+  switch (value) {
+    case "off": case "minimal": case "low": case "medium": case "high": case "xhigh": case "max":
+      return value;
+    default:
+      throw new ConnectError("Unknown thinking level", Code.InvalidArgument);
+  }
 }
 
 /** These Anima tasks can deliver input even before it has reached pi.inbox. */
@@ -264,7 +263,11 @@ export function conversationStatus(conversation: Conversation, models: Models | 
       git = { cwd, at: Date.now(), ...(result.ok && result.value.exitCode === 0 ? { branch: output.trim() } : {}) };
     }
     const model = agent.model && models?.getModelOfType("chat", agent.model.provider, agent.model.modelId);
-    return { cwd, model: agent.model, gitBranch: git.branch, contextTokens: tokens, contextWindow: model?.contextWindow ?? 0 };
+    return {
+      cwd, model: agent.model, gitBranch: git.branch, contextTokens: tokens, contextWindow: model?.contextWindow ?? 0,
+      thinkingLevel: agent.thinkingLevel,
+      supportedThinkingLevels: model ? getSupportedThinkingLevels(model) : [],
+    };
   };
 }
 

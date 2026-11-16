@@ -41,7 +41,8 @@ export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint
       const target = (await runtime.conversation(task.input.conversationId, context))!;
       const submission = await target.submit({
         type: "input",
-        content: task.input.message,
+        content: task.input.entry ? task.input.message
+          : `[Coordinator instruction from conversation ${runtime.conversationId}; not a human message]\n\n${task.input.message}`,
         requestId: task.input.requestId ?? `subagent:${task.id}`,
         whenBusy: task.input.whenBusy ?? "steer",
         entry: task.input.entry ?? {
@@ -51,6 +52,7 @@ export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint
             visibility: "internal",
             sourceConversationId: String(runtime.conversationId),
             sourceTaskId: String(task.id),
+            content: task.input.message,
           },
         },
       }, context);
@@ -59,9 +61,12 @@ export const ConversationReporter = defineTask<ReporterInput, ReporterCheckpoint
         // A queued input may have been edited in place. Report what was actually delivered.
         const delivered = settled.entry === undefined ? undefined : await tx.entry(settled.entry);
         const input = delivered?.model?.find(message => message.role === "user");
-        const instruction = input?.role === "user"
+        const data = delivered?.data;
+        const delegated = data && typeof data === "object" && !Array.isArray(data) && typeof data.content === "string"
+          ? data.content : undefined;
+        const instruction = delegated ?? (input?.role === "user"
           ? typeof input.content === "string" ? input.content : input.content.flatMap(part => part.type === "text" ? [part.text] : []).join("\n")
-          : task.input.message;
+          : task.input.message);
         let report: string | undefined;
         const source = task.input.name === undefined
           ? `conversation ${task.input.conversationId}`

@@ -13,7 +13,6 @@ import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
 import { CodemodeSandbox } from "@earendil-works/pi-codemode";
 import {
   AgentDoc,
-  configure,
   ConversationBusy,
   createRegistry,
   Harness,
@@ -28,7 +27,6 @@ import {
   type EntryId,
   type EntryRecord,
   type JsonObject as DurableJsonObject,
-  type Tx,
   type WatchEnd,
   type WatchHandle,
 } from "@earendil-works/pi-durable";
@@ -36,11 +34,11 @@ import { createCodemodeExtension } from "@earendil-works/pi-durable/codemode";
 import { NodeExecutionEnv } from "@earendil-works/pi-durable/env/node";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
 import { CodingTools } from "@earendil-works/pi-durable/tools";
-import { BackgroundSubagents, CoordinatorTools, SubagentsDoc, WorkerCapabilities } from "./extensions/subagents.ts";
+import { BackgroundSubagents, coordinatorCapabilities, SubagentsDoc } from "./extensions/subagents.ts";
 import { createReporter, InputRequests } from "./extensions/conversation-reporter.ts";
 import { openMcp } from "./extensions/mcp.ts";
 import {
-  abortConversation, backfillConversations, conversationStatus, ConversationsDoc, directoryPath,
+  abortConversation, conversationStatus, ConversationsDoc, directoryPath,
   displayName, listDirectories, registerConversation, updateConversation, updateQueuedInput,
 } from "./extensions/conversations.ts";
 
@@ -54,6 +52,11 @@ const DOCUMENTS = new Map(DOCUMENT_TOKENS.map((token) => [token.definition.kind,
 
 // Match Pi's process-wide limit, including cancelled workers that are still exiting.
 let activeCodemodeWorkers = 0;
+
+const DEFAULT_AGENT = {
+  model: { provider: "openai", modelId: "gpt-6.1-sol" },
+  thinkingLevel: "high" as const,
+};
 
 /** Open a SQLite-backed coding harness using OPENAI_API_KEY from the environment. */
 export async function createHarness() {
@@ -109,60 +112,7 @@ export async function createHarness() {
   harness.subscribeClose(() => {
     void closeTools().catch((error) => console.error("Tool shutdown failed:", error));
   });
-  const startupFailed = async (error: unknown): Promise<never> => {
-    await Promise.all([harness.close(BACKGROUND_CONTEXT), closeTools()]);
-    throw error;
-  };
-  const root = await harness.root(BACKGROUND_CONTEXT, {
-    agent: {
-      model: { provider: "openai", modelId: "gpt-6.1-sol" },
-      thinkingLevel: "high",
-      cwd: process.cwd(),
-    },
-    init: async (tx, id) => { (await tx.doc(ConversationsDoc)).conversations[String(id)].name = "Chief of staff"; },
-  }).catch(startupFailed);
-  // root({ agent }) initializes only NEW roots. Reapply policy to persisted sessions before resume,
-  // without resetting history, changing their chosen model/cwd, or aborting existing submissions.
-  await root.commit(async (tx) => {
-    const agents = await tx.doc(SubagentsDoc, root.id);
-    const children = [];
-    for (const agent of Object.values(agents.agents)) {
-      if (await tx.conversation(agent.conversationId)) children.push(agent.conversationId);
-    }
-    await backfillConversations(tx, root.id, new Map(Object.values(agents.agents).map(agent => [agent.conversationId, agent.name])));
-    await configure(tx, root.id, {
-      extensions: [BackgroundSubagents],
-      tools: CoordinatorTools,
-      modelTools: null,
-      instructions: "",
-    });
-    for (const id of children) {
-      await configure(tx, id, WorkerCapabilities);
-    }
-    // Upgrade existing independent coding conversations without replacing their tool restrictions.
-    let cursor: Cursor | undefined;
-    do {
-      const page = await tx.scanConversations({}, 100, cursor);
-      for (const conversation of page.items) {
-        if (conversation.id === root.id || conversation.owner !== undefined) continue;
-        const agent = await tx.doc(AgentDoc, conversation.id);
-        if (!Array.isArray(agent.extensions) || !agent.extensions.includes(CodingTools.name)) continue;
-        for (const extension of WorkerCapabilities.extensions) {
-          if (!agent.extensions.includes(extension.name)) agent.extensions.push(extension.name);
-        }
-        if (Array.isArray(agent.tools)) {
-          const enabled = new Set(agent.tools);
-          // Preserve existing restrictions, while allowing newly discovered MCP tools.
-          agent.tools = { remove: registry.snapshot().tools()
-            .filter(({ extension, tool }) => extension.name !== "mcp" && extension.name !== "codemode" && !enabled.has(tool.name))
-            .map(({ tool }) => tool.name) };
-        }
-      }
-      cursor = page.next;
-    } while (cursor !== undefined);
-  }, BACKGROUND_CONTEXT).catch(startupFailed);
-
-  return { harness, root, models };
+  return { harness, models };
 }
 
 /** Shared user-input policy. Internal agent messages still use Conversation.submit directly. */
@@ -174,16 +124,15 @@ export async function submitInput(
   options: { requestId?: string; whenBusy?: "followUp" | "steer" | "reject" } = {},
 ): Promise<void> {
   if (!content.trim()) throw new Error("Input must not be empty");
-  const root = await harness.root(context);
-  if (conversation.id === root.id) {
-    await conversation.submit({ type: "input", content, ...options, whenBusy: options.whenBusy ?? "steer" }, context);
-    return;
-  }
-  const directory = await harness.snapshot(SubagentsDoc, root.id, context);
-  const agent = Object.values(directory?.agents ?? {}).find((agent) => agent.conversationId === conversation.id);
-  if (agent) {
-    // A durable reporter owns delivery and report-back; disconnecting the client loses neither.
-    await root.commit(async (tx) => {
+  const record = await harness.commit(tx => tx.conversation(conversation.id), context);
+  if (record?.owner) {
+    const owner = await harness.conversation(record.owner.conversationId, context);
+    if (!owner) throw new ConnectError("Worker's coordinator is unavailable", Code.FailedPrecondition);
+    // A durable reporter belongs to the actual coordinator, not a singleton conversation.
+    await owner.commit(async (tx) => {
+      const directory = await tx.doc(SubagentsDoc, owner.id);
+      const agent = Object.values(directory.agents).find(agent => agent.conversationId === conversation.id);
+      if (!agent) throw new ConnectError("Conversation is not a registered subagent", Code.FailedPrecondition);
       const receipt = options.requestId
         ? await tx.doc(InputRequests, conversation.id, options.requestId, null) : undefined;
       if (receipt?.taskId !== undefined) return;
@@ -204,7 +153,7 @@ export async function submitInput(
     harness.resume();
     return;
   }
-  await conversation.submit({ type: "input", content, ...options }, context);
+  await conversation.submit({ type: "input", content, ...options, whenBusy: options.whenBusy ?? "steer" }, context);
 }
 
 /** Start a loopback Connect server, taking ownership of its harness until close(). */
@@ -217,25 +166,16 @@ export async function startServer(harness?: Harness, options: { port?: number; m
     shutdownSignal: shutdown.signal,
     routes(router) {
       router.service(HarnessService, {
-        async getRootConversation(_request, rpc) {
-          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
-          const root = await runtime.root(context);
-          return { conversationId: String(root.id) };
-        },
         async createConversation(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
-          const defaults = await (await runtime.root(context)).agent(context);
-          const cwd = await directoryPath(request.cwd ?? defaults.cwd ?? process.cwd(), context);
+          const cwd = await directoryPath(request.cwd ?? process.cwd(), context);
           const name = request.name === undefined ? undefined : displayName(request.name);
           const conversation = await runtime.createConversation({
             ownership: { kind: "ownerless" },
             agent: {
-              model: defaults.model,
-              thinkingLevel: defaults.thinkingLevel,
+              ...DEFAULT_AGENT,
               cwd,
-              ...WorkerCapabilities,
-              modelTools: null,
-              instructions: request.instructions ?? "You are an independent coding assistant.",
+              ...coordinatorCapabilities(request.instructions),
             },
             init: async (tx, id) => {
               const info = await registerConversation(tx, { id });
@@ -309,8 +249,7 @@ export async function startServer(harness?: Harness, options: { port?: number; m
         async updateConversation(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
           const conversation = await requireConversation(runtime, request.conversationId, context);
-          const root = await runtime.root(context);
-          await updateConversation(conversation, root.id, request, models, context);
+          await updateConversation(conversation, request, models, context);
           return {};
         },
         async listDirectories(request, rpc) {
@@ -329,42 +268,6 @@ export async function startServer(harness?: Harness, options: { port?: number; m
           parseId(request.submissionId);
           const conversation = await requireConversation(runtime, request.conversationId, context);
           return updateQueuedInput(conversation, request, context);
-        },
-        async forkConversation(request, rpc) {
-          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
-          const source = await requireConversation(runtime, request.conversationId, context);
-          const at = request.entryId === undefined ? undefined : parseId<EntryId>(request.entryId);
-          if (at !== undefined && !(await source.entries({ minEntryId: at, maxEntryId: at }, 1, undefined, context)).items.length) {
-            throw new ConnectError("Fork entry is not visible in this conversation", Code.InvalidArgument);
-          }
-          const cwd = request.cwd === undefined ? undefined : await directoryPath(request.cwd, context);
-          const directory = await runtime.snapshot(ConversationsDoc, context);
-          const info = directory?.conversations[request.conversationId];
-          const name = displayName(request.name ?? `${(info?.name ?? "Conversation").slice(0, 180)} (fork)`);
-          const root = await runtime.root(context);
-          const preferences = at === undefined ? await source.agent(context) : undefined;
-          const options = {
-            ownership: { kind: "ownerless" } as const,
-            agent: {
-              ...(preferences ? {
-                model: preferences.model, thinkingLevel: preferences.thinkingLevel,
-                cwd: preferences.cwd, instructions: preferences.instructions,
-              } : {}),
-              // Normal history forks retain native as-of tool restrictions and loaded tools.
-              ...(at === undefined || source.id === root.id ? { ...WorkerCapabilities, modelTools: null } : {}),
-              ...(cwd === undefined ? {} : { cwd }),
-              ...(source.id === root.id || info?.ownerConversationId ? { instructions: "You are an independent coding assistant." } : {}),
-            },
-            init: async (tx: Tx, id: ConversationId) => {
-              const info = await registerConversation(tx, {
-                id, ...(at === undefined ? {} : { parent: { conversationId: source.id, at } }),
-              });
-              info.name = name;
-            },
-          };
-          const conversation = at === undefined
-            ? await runtime.createConversation(options, context) : await source.fork(at, options, context);
-          return { conversationId: String(conversation.id) };
         },
         async getEntries(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
@@ -386,12 +289,8 @@ export async function startServer(harness?: Harness, options: { port?: number; m
   }));
 
   try {
-    if (harness) {
-      const root = await runtime.root(BACKGROUND_CONTEXT);
-      const agents = await runtime.snapshot(SubagentsDoc, root.id, BACKGROUND_CONTEXT);
-      await root.commit(tx => backfillConversations(tx, root.id,
-        new Map(Object.values(agents?.agents ?? {}).map(agent => [agent.conversationId, agent.name]))), BACKGROUND_CONTEXT);
-    }
+    // Initialize the directory without creating any conversation, even on an empty database.
+    await runtime.commit(async tx => { await tx.doc(ConversationsDoc); }, BACKGROUND_CONTEXT);
     await new Promise<void>((resolve, reject) => {
       server.once("error", reject);
       server.listen(options.port ?? 4242, "127.0.0.1", () => {

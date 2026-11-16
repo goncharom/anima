@@ -163,17 +163,6 @@ export class RemoteClient {
     return values;
   }
 
-  async history(id: string, signal: AbortSignal): Promise<Entry[]> {
-    const result: Entry[] = [];
-    let before: string | undefined;
-    do {
-      const page = await this.rpc.getEntries({ conversationId: id, beforeEntryId: before, limit: 200 }, { signal });
-      result.push(...entries(page.entries));
-      before = page.nextBeforeEntryId;
-    } while (before !== undefined);
-    return result.sort((a, b) => a.id - b.id);
-  }
-
   async close() {
     this.lifetime.abort();
     await Promise.all(this.jobs);

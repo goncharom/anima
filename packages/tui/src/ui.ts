@@ -16,22 +16,10 @@ export function initKeys() {
     "app.clear": { defaultKeys: "ctrl+c" },
     "app.exit": { defaultKeys: "ctrl+d" },
     "app.model.select": { defaultKeys: "ctrl+l" },
+    "app.thinking.cycle": { defaultKeys: "shift+tab" },
     "app.tools.expand": { defaultKeys: "ctrl+o" },
-    "app.message.copy": { defaultKeys: "ctrl+x" },
     "app.message.followUp": { defaultKeys: windowsKeys ? "ctrl+q" : "alt+enter" },
     "app.message.dequeue": { defaultKeys: windowsKeys ? "alt+q" : "alt+up" },
-    "app.tree.foldOrUp": { defaultKeys: ["ctrl+left", "alt+left"] },
-    "app.tree.unfoldOrDown": { defaultKeys: ["ctrl+right", "alt+right"] },
-    // Labels are branch names, not an unsupported server-side label editor.
-    "app.tree.editLabel": { defaultKeys: [] },
-    "app.tree.toggleLabelTimestamp": { defaultKeys: [] },
-    "app.tree.filter.default": { defaultKeys: "ctrl+d" },
-    "app.tree.filter.noTools": { defaultKeys: "ctrl+t" },
-    "app.tree.filter.userOnly": { defaultKeys: "ctrl+u" },
-    "app.tree.filter.labeledOnly": { defaultKeys: "ctrl+l" },
-    "app.tree.filter.all": { defaultKeys: "ctrl+a" },
-    "app.tree.filter.cycleForward": { defaultKeys: "ctrl+o" },
-    "app.tree.filter.cycleBackward": { defaultKeys: "shift+ctrl+o" },
   };
   setKeybindings(new KeybindingsManager(keys));
 }
