@@ -18,6 +18,7 @@ export const COMMANDS: SlashCommand[] = [
   { name: "cwd", description: "Change this conversation's folder while idle" },
   { name: "model", description: "Choose this conversation's chat model" },
   { name: "queue", description: "Edit queued steering/follow-up messages" },
+  { name: "compact", description: "Summarize older context: /compact [instructions]" },
   { name: "sidebar", description: "Toggle human conversations (F2)" },
   { name: "agents", description: "Toggle this coordinator's subagents (F3)" },
   { name: "resize", description: "Set panel width: /resize left|right columns" },
@@ -64,6 +65,7 @@ export class ChatPane extends VStack {
   private connectionError = "";
   private unfollow?: () => void;
   private sending = false;
+  private compacting = false;
   private expanded = false;
   private hideThinking = false;
   private pending?: { content: string; mode: BusyBehavior; requestId: string };
@@ -156,9 +158,12 @@ export class ChatPane extends VStack {
   }
   private isWorking() {
     const live = object(this.remote.state(this.id).snapshot?.docs["pi.live"]);
-    return this.ready && live.run !== undefined;
+    return this.ready && (live.run !== undefined || Array.isArray(live.compactions) && live.compactions.length > 0);
   }
   private syncWorkingIndicator() {
+    const live = object(this.remote.state(this.id).snapshot?.docs["pi.live"]);
+    const compacting = Array.isArray(live.compactions) && live.compactions.length > 0;
+    this.workingIndicator.setMessage(compacting ? "Compacting context…" : "Working…");
     const working = this.isWorking();
     if (working === this.workingIndicatorRunning) return;
     this.workingIndicatorRunning = working;
@@ -289,6 +294,18 @@ export class ChatPane extends VStack {
         description: `${info.model?.provider}/${info.model?.modelId} · ${Math.round(info.contextWindow / 1_000)}k context`,
       })));
       if (choice !== undefined) await this.remote.rpc.updateConversation({ conversationId: this.id, model: response.models[Number(choice)].model }, { signal });
+    } else if (name === "compact") {
+      if (this.compacting) throw new Error("A compaction request is already pending in this pane.");
+      this.compacting = true;
+      this.note = "Compacting context… (Esc to cancel)";
+      this.tui.requestRender();
+      try {
+        const result = await this.remote.rpc.compactConversation({ conversationId: this.id, instructions: argument || undefined }, { signal });
+        if (!this.disposed) this.note = result.compacted ? "Context compacted." : "Context unchanged; no compaction was applied.";
+      } finally {
+        this.compacting = false;
+        this.tui.requestRender();
+      }
     } else if (name === "queue") {
       const items = queuedInputs(this.remote.state(this.id));
       const choice = await this.dialogs.choose("Queued inputs", items.map(item => ({ value: item.id, label: item.content.slice(0, 200), description: item.mode === "steer" ? "steering" : "follow-up" })));

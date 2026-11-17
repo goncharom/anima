@@ -11,7 +11,7 @@ import type { JsonObject, Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file anima/v1/harness.proto.
  */
 export const file_anima_v1_harness: GenFile = /*@__PURE__*/
-  fileDesc("ChZhbmltYS92MS9oYXJuZXNzLnByb3RvEghhbmltYS52MSJ9ChlDcmVhdGVDb252ZXJzYXRpb25SZXF1ZXN0EhAKA2N3ZBgBIAEoCUgAiAEBEhkKDGluc3RydWN0aW9ucxgCIAEoCUgBiAEBEhEKBG5hbWUYAyABKAlIAogBAUIGCgRfY3dkQg8KDV9pbnN0cnVjdGlvbnNCBwoFX25hbWUiNQoaQ3JlYXRlQ29udmVyc2F0aW9uUmVzcG9uc2USFwoPY29udmVyc2F0aW9uX2lkGAEgASgJIpEBChJTdWJtaXRJbnB1dFJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEg8KB2NvbnRlbnQYAiABKAkSFwoKcmVxdWVzdF9pZBgDIAEoCUgAiAEBEikKCXdoZW5fYnVzeRgEIAEoDjIWLmFuaW1hLnYxLkJ1c3lCZWhhdmlvckINCgtfcmVxdWVzdF9pZCIVChNTdWJtaXRJbnB1dFJlc3BvbnNlIjMKGFdhdGNoQ29udmVyc2F0aW9uUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkiTQoZV2F0Y2hDb252ZXJzYXRpb25SZXNwb25zZRIwCghzbmFwc2hvdBgBIAEoCzIeLmFuaW1hLnYxLkNvbnZlcnNhdGlvblNuYXBzaG90IrcCChRDb252ZXJzYXRpb25TbmFwc2hvdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSKAoHZW50cmllcxgCIAMoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3QSHAoPYmVmb3JlX2VudHJ5X2lkGAMgASgJSACIAQESNgoEZG9jcxgEIAMoCzIoLmFuaW1hLnYxLkNvbnZlcnNhdGlvblNuYXBzaG90LkRvY3NFbnRyeRIsCgZzdGF0dXMYBSABKAsyHC5hbmltYS52MS5Db252ZXJzYXRpb25TdGF0dXMaRAoJRG9jc0VudHJ5EgsKA2tleRgBIAEoCRImCgV2YWx1ZRgCIAEoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3Q6AjgBQhIKEF9iZWZvcmVfZW50cnlfaWQiFwoVV2F0Y2hUYXNrR3JhcGhSZXF1ZXN0IkAKFldhdGNoVGFza0dyYXBoUmVzcG9uc2USJgoFZ3JhcGgYASABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0Ij0KFFdhdGNoRG9jdW1lbnRSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIMCgRraW5kGAIgASgJIlAKFVdhdGNoRG9jdW1lbnRSZXNwb25zZRImCgV2YWx1ZRgBIAEoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3QSDwoHcmV0aXJlZBgCIAEoCCIzChhBYm9ydENvbnZlcnNhdGlvblJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJIhsKGUFib3J0Q29udmVyc2F0aW9uUmVzcG9uc2UibQoRR2V0RW50cmllc1JlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhwKD2JlZm9yZV9lbnRyeV9pZBgCIAEoCUgAiAEBEg0KBWxpbWl0GAMgASgNQhIKEF9iZWZvcmVfZW50cnlfaWQiegoSR2V0RW50cmllc1Jlc3BvbnNlEigKB2VudHJpZXMYASADKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0EiEKFG5leHRfYmVmb3JlX2VudHJ5X2lkGAIgASgJSACIAQFCFwoVX25leHRfYmVmb3JlX2VudHJ5X2lkIi4KCE1vZGVsUmVmEhAKCHByb3ZpZGVyGAEgASgJEhAKCG1vZGVsX2lkGAIgASgJIu8BChJDb252ZXJzYXRpb25TdGF0dXMSCwoDY3dkGAEgASgJEiEKBW1vZGVsGAIgASgLMhIuYW5pbWEudjEuTW9kZWxSZWYSFwoKZ2l0X2JyYW5jaBgDIAEoCUgAiAEBEhYKDmNvbnRleHRfdG9rZW5zGAQgASgNEhYKDmNvbnRleHRfd2luZG93GAUgASgNEhsKDnRoaW5raW5nX2xldmVsGAYgASgJSAGIAQESIQoZc3VwcG9ydGVkX3RoaW5raW5nX2xldmVscxgHIAMoCUINCgtfZ2l0X2JyYW5jaEIRCg9fdGhpbmtpbmdfbGV2ZWwisQEKEENvbnZlcnNhdGlvbkluZm8SFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSEAoIYXJjaGl2ZWQYAyABKAgSIgoVb3duZXJfY29udmVyc2F0aW9uX2lkGAQgASgJSACIAQESFwoKdGFza190aXRsZRgFIAEoCUgBiAEBQhgKFl9vd25lcl9jb252ZXJzYXRpb25faWRCDQoLX3Rhc2tfdGl0bGUiGwoZV2F0Y2hDb252ZXJzYXRpb25zUmVxdWVzdCJPChpXYXRjaENvbnZlcnNhdGlvbnNSZXNwb25zZRIxCg1jb252ZXJzYXRpb25zGAEgAygLMhouYW5pbWEudjEuQ29udmVyc2F0aW9uSW5mbyLhAQoZVXBkYXRlQ29udmVyc2F0aW9uUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSEQoEbmFtZRgCIAEoCUgAiAEBEhUKCGFyY2hpdmVkGAMgASgISAGIAQESEAoDY3dkGAQgASgJSAKIAQESIQoFbW9kZWwYBSABKAsyEi5hbmltYS52MS5Nb2RlbFJlZhIbCg50aGlua2luZ19sZXZlbBgGIAEoCUgDiAEBQgcKBV9uYW1lQgsKCV9hcmNoaXZlZEIGCgRfY3dkQhEKD190aGlua2luZ19sZXZlbCIcChpVcGRhdGVDb252ZXJzYXRpb25SZXNwb25zZSI2ChZMaXN0RGlyZWN0b3JpZXNSZXF1ZXN0EgwKBHBhdGgYASABKAkSDgoGb2Zmc2V0GAIgASgNIicKCURpcmVjdG9yeRIMCgRuYW1lGAEgASgJEgwKBHBhdGgYAiABKAkiiwEKF0xpc3REaXJlY3Rvcmllc1Jlc3BvbnNlEgwKBHBhdGgYASABKAkSDgoGcGFyZW50GAIgASgJEigKC2RpcmVjdG9yaWVzGAMgAygLMhMuYW5pbWEudjEuRGlyZWN0b3J5EhgKC25leHRfb2Zmc2V0GAQgASgNSACIAQFCDgoMX25leHRfb2Zmc2V0ImcKCU1vZGVsSW5mbxIhCgVtb2RlbBgBIAEoCzISLmFuaW1hLnYxLk1vZGVsUmVmEgwKBG5hbWUYAiABKAkSFgoOY29udGV4dF93aW5kb3cYAyABKA0SEQoJcmVhc29uaW5nGAQgASgIIhMKEUxpc3RNb2RlbHNSZXF1ZXN0IjkKEkxpc3RNb2RlbHNSZXNwb25zZRIjCgZtb2RlbHMYASADKAsyEy5hbmltYS52MS5Nb2RlbEluZm8igwIKGFVwZGF0ZVF1ZXVlZElucHV0UmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSFQoNc3VibWlzc2lvbl9pZBgCIAEoCRIYChBleHBlY3RlZF9jb250ZW50GAMgASgJEi0KDWV4cGVjdGVkX21vZGUYBCABKA4yFi5hbmltYS52MS5CdXN5QmVoYXZpb3ISFAoHY29udGVudBgFIAEoCUgAiAEBEi4KCXdoZW5fYnVzeRgGIAEoDjIWLmFuaW1hLnYxLkJ1c3lCZWhhdmlvckgBiAEBEg4KBnJlbW92ZRgHIAEoCEIKCghfY29udGVudEIMCgpfd2hlbl9idXN5IlcKGVVwZGF0ZVF1ZXVlZElucHV0UmVzcG9uc2USDwoHY29udGVudBgBIAEoCRIpCgl3aGVuX2J1c3kYAiABKA4yFi5hbmltYS52MS5CdXN5QmVoYXZpb3IqeQoMQnVzeUJlaGF2aW9yEh0KGUJVU1lfQkVIQVZJT1JfVU5TUEVDSUZJRUQQABIXChNCVVNZX0JFSEFWSU9SX1FVRVVFEAESFwoTQlVTWV9CRUhBVklPUl9TVEVFUhACEhgKFEJVU1lfQkVIQVZJT1JfUkVKRUNUEAMysggKDkhhcm5lc3NTZXJ2aWNlEl8KEkNyZWF0ZUNvbnZlcnNhdGlvbhIjLmFuaW1hLnYxLkNyZWF0ZUNvbnZlcnNhdGlvblJlcXVlc3QaJC5hbmltYS52MS5DcmVhdGVDb252ZXJzYXRpb25SZXNwb25zZRJKCgtTdWJtaXRJbnB1dBIcLmFuaW1hLnYxLlN1Ym1pdElucHV0UmVxdWVzdBodLmFuaW1hLnYxLlN1Ym1pdElucHV0UmVzcG9uc2USXgoRV2F0Y2hDb252ZXJzYXRpb24SIi5hbmltYS52MS5XYXRjaENvbnZlcnNhdGlvblJlcXVlc3QaIy5hbmltYS52MS5XYXRjaENvbnZlcnNhdGlvblJlc3BvbnNlMAESVQoOV2F0Y2hUYXNrR3JhcGgSHy5hbmltYS52MS5XYXRjaFRhc2tHcmFwaFJlcXVlc3QaIC5hbmltYS52MS5XYXRjaFRhc2tHcmFwaFJlc3BvbnNlMAESUgoNV2F0Y2hEb2N1bWVudBIeLmFuaW1hLnYxLldhdGNoRG9jdW1lbnRSZXF1ZXN0Gh8uYW5pbWEudjEuV2F0Y2hEb2N1bWVudFJlc3BvbnNlMAESXAoRQWJvcnRDb252ZXJzYXRpb24SIi5hbmltYS52MS5BYm9ydENvbnZlcnNhdGlvblJlcXVlc3QaIy5hbmltYS52MS5BYm9ydENvbnZlcnNhdGlvblJlc3BvbnNlEkcKCkdldEVudHJpZXMSGy5hbmltYS52MS5HZXRFbnRyaWVzUmVxdWVzdBocLmFuaW1hLnYxLkdldEVudHJpZXNSZXNwb25zZRJhChJXYXRjaENvbnZlcnNhdGlvbnMSIy5hbmltYS52MS5XYXRjaENvbnZlcnNhdGlvbnNSZXF1ZXN0GiQuYW5pbWEudjEuV2F0Y2hDb252ZXJzYXRpb25zUmVzcG9uc2UwARJfChJVcGRhdGVDb252ZXJzYXRpb24SIy5hbmltYS52MS5VcGRhdGVDb252ZXJzYXRpb25SZXF1ZXN0GiQuYW5pbWEudjEuVXBkYXRlQ29udmVyc2F0aW9uUmVzcG9uc2USVgoPTGlzdERpcmVjdG9yaWVzEiAuYW5pbWEudjEuTGlzdERpcmVjdG9yaWVzUmVxdWVzdBohLmFuaW1hLnYxLkxpc3REaXJlY3Rvcmllc1Jlc3BvbnNlEkcKCkxpc3RNb2RlbHMSGy5hbmltYS52MS5MaXN0TW9kZWxzUmVxdWVzdBocLmFuaW1hLnYxLkxpc3RNb2RlbHNSZXNwb25zZRJcChFVcGRhdGVRdWV1ZWRJbnB1dBIiLmFuaW1hLnYxLlVwZGF0ZVF1ZXVlZElucHV0UmVxdWVzdBojLmFuaW1hLnYxLlVwZGF0ZVF1ZXVlZElucHV0UmVzcG9uc2ViBnByb3RvMw", [file_google_protobuf_struct]);
+  fileDesc("ChZhbmltYS92MS9oYXJuZXNzLnByb3RvEghhbmltYS52MSJ9ChlDcmVhdGVDb252ZXJzYXRpb25SZXF1ZXN0EhAKA2N3ZBgBIAEoCUgAiAEBEhkKDGluc3RydWN0aW9ucxgCIAEoCUgBiAEBEhEKBG5hbWUYAyABKAlIAogBAUIGCgRfY3dkQg8KDV9pbnN0cnVjdGlvbnNCBwoFX25hbWUiNQoaQ3JlYXRlQ29udmVyc2F0aW9uUmVzcG9uc2USFwoPY29udmVyc2F0aW9uX2lkGAEgASgJIpEBChJTdWJtaXRJbnB1dFJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEg8KB2NvbnRlbnQYAiABKAkSFwoKcmVxdWVzdF9pZBgDIAEoCUgAiAEBEikKCXdoZW5fYnVzeRgEIAEoDjIWLmFuaW1hLnYxLkJ1c3lCZWhhdmlvckINCgtfcmVxdWVzdF9pZCIVChNTdWJtaXRJbnB1dFJlc3BvbnNlIjMKGFdhdGNoQ29udmVyc2F0aW9uUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkiTQoZV2F0Y2hDb252ZXJzYXRpb25SZXNwb25zZRIwCghzbmFwc2hvdBgBIAEoCzIeLmFuaW1hLnYxLkNvbnZlcnNhdGlvblNuYXBzaG90IrcCChRDb252ZXJzYXRpb25TbmFwc2hvdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSKAoHZW50cmllcxgCIAMoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3QSHAoPYmVmb3JlX2VudHJ5X2lkGAMgASgJSACIAQESNgoEZG9jcxgEIAMoCzIoLmFuaW1hLnYxLkNvbnZlcnNhdGlvblNuYXBzaG90LkRvY3NFbnRyeRIsCgZzdGF0dXMYBSABKAsyHC5hbmltYS52MS5Db252ZXJzYXRpb25TdGF0dXMaRAoJRG9jc0VudHJ5EgsKA2tleRgBIAEoCRImCgV2YWx1ZRgCIAEoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3Q6AjgBQhIKEF9iZWZvcmVfZW50cnlfaWQiFwoVV2F0Y2hUYXNrR3JhcGhSZXF1ZXN0IkAKFldhdGNoVGFza0dyYXBoUmVzcG9uc2USJgoFZ3JhcGgYASABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0Ij0KFFdhdGNoRG9jdW1lbnRSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIMCgRraW5kGAIgASgJIlAKFVdhdGNoRG9jdW1lbnRSZXNwb25zZRImCgV2YWx1ZRgBIAEoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3QSDwoHcmV0aXJlZBgCIAEoCCIzChhBYm9ydENvbnZlcnNhdGlvblJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJIhsKGUFib3J0Q29udmVyc2F0aW9uUmVzcG9uc2UiYQoaQ29tcGFjdENvbnZlcnNhdGlvblJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhkKDGluc3RydWN0aW9ucxgCIAEoCUgAiAEBQg8KDV9pbnN0cnVjdGlvbnMiMAobQ29tcGFjdENvbnZlcnNhdGlvblJlc3BvbnNlEhEKCWNvbXBhY3RlZBgBIAEoCCJtChFHZXRFbnRyaWVzUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSHAoPYmVmb3JlX2VudHJ5X2lkGAIgASgJSACIAQESDQoFbGltaXQYAyABKA1CEgoQX2JlZm9yZV9lbnRyeV9pZCJ6ChJHZXRFbnRyaWVzUmVzcG9uc2USKAoHZW50cmllcxgBIAMoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3QSIQoUbmV4dF9iZWZvcmVfZW50cnlfaWQYAiABKAlIAIgBAUIXChVfbmV4dF9iZWZvcmVfZW50cnlfaWQiLgoITW9kZWxSZWYSEAoIcHJvdmlkZXIYASABKAkSEAoIbW9kZWxfaWQYAiABKAki7wEKEkNvbnZlcnNhdGlvblN0YXR1cxILCgNjd2QYASABKAkSIQoFbW9kZWwYAiABKAsyEi5hbmltYS52MS5Nb2RlbFJlZhIXCgpnaXRfYnJhbmNoGAMgASgJSACIAQESFgoOY29udGV4dF90b2tlbnMYBCABKA0SFgoOY29udGV4dF93aW5kb3cYBSABKA0SGwoOdGhpbmtpbmdfbGV2ZWwYBiABKAlIAYgBARIhChlzdXBwb3J0ZWRfdGhpbmtpbmdfbGV2ZWxzGAcgAygJQg0KC19naXRfYnJhbmNoQhEKD190aGlua2luZ19sZXZlbCKxAQoQQ29udmVyc2F0aW9uSW5mbxIXCg9jb252ZXJzYXRpb25faWQYASABKAkSDAoEbmFtZRgCIAEoCRIQCghhcmNoaXZlZBgDIAEoCBIiChVvd25lcl9jb252ZXJzYXRpb25faWQYBCABKAlIAIgBARIXCgp0YXNrX3RpdGxlGAUgASgJSAGIAQFCGAoWX293bmVyX2NvbnZlcnNhdGlvbl9pZEINCgtfdGFza190aXRsZSIbChlXYXRjaENvbnZlcnNhdGlvbnNSZXF1ZXN0Ik8KGldhdGNoQ29udmVyc2F0aW9uc1Jlc3BvbnNlEjEKDWNvbnZlcnNhdGlvbnMYASADKAsyGi5hbmltYS52MS5Db252ZXJzYXRpb25JbmZvIuEBChlVcGRhdGVDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIRCgRuYW1lGAIgASgJSACIAQESFQoIYXJjaGl2ZWQYAyABKAhIAYgBARIQCgNjd2QYBCABKAlIAogBARIhCgVtb2RlbBgFIAEoCzISLmFuaW1hLnYxLk1vZGVsUmVmEhsKDnRoaW5raW5nX2xldmVsGAYgASgJSAOIAQFCBwoFX25hbWVCCwoJX2FyY2hpdmVkQgYKBF9jd2RCEQoPX3RoaW5raW5nX2xldmVsIhwKGlVwZGF0ZUNvbnZlcnNhdGlvblJlc3BvbnNlIjYKFkxpc3REaXJlY3Rvcmllc1JlcXVlc3QSDAoEcGF0aBgBIAEoCRIOCgZvZmZzZXQYAiABKA0iJwoJRGlyZWN0b3J5EgwKBG5hbWUYASABKAkSDAoEcGF0aBgCIAEoCSKLAQoXTGlzdERpcmVjdG9yaWVzUmVzcG9uc2USDAoEcGF0aBgBIAEoCRIOCgZwYXJlbnQYAiABKAkSKAoLZGlyZWN0b3JpZXMYAyADKAsyEy5hbmltYS52MS5EaXJlY3RvcnkSGAoLbmV4dF9vZmZzZXQYBCABKA1IAIgBAUIOCgxfbmV4dF9vZmZzZXQiZwoJTW9kZWxJbmZvEiEKBW1vZGVsGAEgASgLMhIuYW5pbWEudjEuTW9kZWxSZWYSDAoEbmFtZRgCIAEoCRIWCg5jb250ZXh0X3dpbmRvdxgDIAEoDRIRCglyZWFzb25pbmcYBCABKAgiEwoRTGlzdE1vZGVsc1JlcXVlc3QiOQoSTGlzdE1vZGVsc1Jlc3BvbnNlEiMKBm1vZGVscxgBIAMoCzITLmFuaW1hLnYxLk1vZGVsSW5mbyKDAgoYVXBkYXRlUXVldWVkSW5wdXRSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIVCg1zdWJtaXNzaW9uX2lkGAIgASgJEhgKEGV4cGVjdGVkX2NvbnRlbnQYAyABKAkSLQoNZXhwZWN0ZWRfbW9kZRgEIAEoDjIWLmFuaW1hLnYxLkJ1c3lCZWhhdmlvchIUCgdjb250ZW50GAUgASgJSACIAQESLgoJd2hlbl9idXN5GAYgASgOMhYuYW5pbWEudjEuQnVzeUJlaGF2aW9ySAGIAQESDgoGcmVtb3ZlGAcgASgIQgoKCF9jb250ZW50QgwKCl93aGVuX2J1c3kiVwoZVXBkYXRlUXVldWVkSW5wdXRSZXNwb25zZRIPCgdjb250ZW50GAEgASgJEikKCXdoZW5fYnVzeRgCIAEoDjIWLmFuaW1hLnYxLkJ1c3lCZWhhdmlvcip5CgxCdXN5QmVoYXZpb3ISHQoZQlVTWV9CRUhBVklPUl9VTlNQRUNJRklFRBAAEhcKE0JVU1lfQkVIQVZJT1JfUVVFVUUQARIXChNCVVNZX0JFSEFWSU9SX1NURUVSEAISGAoUQlVTWV9CRUhBVklPUl9SRUpFQ1QQAzKWCQoOSGFybmVzc1NlcnZpY2USXwoSQ3JlYXRlQ29udmVyc2F0aW9uEiMuYW5pbWEudjEuQ3JlYXRlQ29udmVyc2F0aW9uUmVxdWVzdBokLmFuaW1hLnYxLkNyZWF0ZUNvbnZlcnNhdGlvblJlc3BvbnNlEkoKC1N1Ym1pdElucHV0EhwuYW5pbWEudjEuU3VibWl0SW5wdXRSZXF1ZXN0Gh0uYW5pbWEudjEuU3VibWl0SW5wdXRSZXNwb25zZRJeChFXYXRjaENvbnZlcnNhdGlvbhIiLmFuaW1hLnYxLldhdGNoQ29udmVyc2F0aW9uUmVxdWVzdBojLmFuaW1hLnYxLldhdGNoQ29udmVyc2F0aW9uUmVzcG9uc2UwARJVCg5XYXRjaFRhc2tHcmFwaBIfLmFuaW1hLnYxLldhdGNoVGFza0dyYXBoUmVxdWVzdBogLmFuaW1hLnYxLldhdGNoVGFza0dyYXBoUmVzcG9uc2UwARJSCg1XYXRjaERvY3VtZW50Eh4uYW5pbWEudjEuV2F0Y2hEb2N1bWVudFJlcXVlc3QaHy5hbmltYS52MS5XYXRjaERvY3VtZW50UmVzcG9uc2UwARJcChFBYm9ydENvbnZlcnNhdGlvbhIiLmFuaW1hLnYxLkFib3J0Q29udmVyc2F0aW9uUmVxdWVzdBojLmFuaW1hLnYxLkFib3J0Q29udmVyc2F0aW9uUmVzcG9uc2USYgoTQ29tcGFjdENvbnZlcnNhdGlvbhIkLmFuaW1hLnYxLkNvbXBhY3RDb252ZXJzYXRpb25SZXF1ZXN0GiUuYW5pbWEudjEuQ29tcGFjdENvbnZlcnNhdGlvblJlc3BvbnNlEkcKCkdldEVudHJpZXMSGy5hbmltYS52MS5HZXRFbnRyaWVzUmVxdWVzdBocLmFuaW1hLnYxLkdldEVudHJpZXNSZXNwb25zZRJhChJXYXRjaENvbnZlcnNhdGlvbnMSIy5hbmltYS52MS5XYXRjaENvbnZlcnNhdGlvbnNSZXF1ZXN0GiQuYW5pbWEudjEuV2F0Y2hDb252ZXJzYXRpb25zUmVzcG9uc2UwARJfChJVcGRhdGVDb252ZXJzYXRpb24SIy5hbmltYS52MS5VcGRhdGVDb252ZXJzYXRpb25SZXF1ZXN0GiQuYW5pbWEudjEuVXBkYXRlQ29udmVyc2F0aW9uUmVzcG9uc2USVgoPTGlzdERpcmVjdG9yaWVzEiAuYW5pbWEudjEuTGlzdERpcmVjdG9yaWVzUmVxdWVzdBohLmFuaW1hLnYxLkxpc3REaXJlY3Rvcmllc1Jlc3BvbnNlEkcKCkxpc3RNb2RlbHMSGy5hbmltYS52MS5MaXN0TW9kZWxzUmVxdWVzdBocLmFuaW1hLnYxLkxpc3RNb2RlbHNSZXNwb25zZRJcChFVcGRhdGVRdWV1ZWRJbnB1dBIiLmFuaW1hLnYxLlVwZGF0ZVF1ZXVlZElucHV0UmVxdWVzdBojLmFuaW1hLnYxLlVwZGF0ZVF1ZXVlZElucHV0UmVzcG9uc2ViBnByb3RvMw", [file_google_protobuf_struct]);
 
 /**
  * IDs are opaque strings, scoped to the server's database. They remain valid
@@ -321,6 +321,52 @@ export const AbortConversationResponseSchema: GenMessage<AbortConversationRespon
   messageDesc(file_anima_v1_harness, 12);
 
 /**
+ * @generated from message anima.v1.CompactConversationRequest
+ */
+export type CompactConversationRequest = Message<"anima.v1.CompactConversationRequest"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * Optional guidance for the summary, not a new chat message.
+   *
+   * @generated from field: optional string instructions = 2;
+   */
+  instructions?: string | undefined;
+};
+
+/**
+ * Describes the message anima.v1.CompactConversationRequest.
+ * Use `create(CompactConversationRequestSchema)` to create a new message.
+ */
+export const CompactConversationRequestSchema: GenMessage<CompactConversationRequest> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 13);
+
+/**
+ * Waits for Durable's compaction task and summary placement. Progress/failures are
+ * in pi.live; AbortConversation cancels the work. Disconnecting stops only the wait.
+ *
+ * @generated from message anima.v1.CompactConversationResponse
+ */
+export type CompactConversationResponse = Message<"anima.v1.CompactConversationResponse"> & {
+  /**
+   * False if nothing was eligible or a newer context change superseded the summary.
+   *
+   * @generated from field: bool compacted = 1;
+   */
+  compacted: boolean;
+};
+
+/**
+ * Describes the message anima.v1.CompactConversationResponse.
+ * Use `create(CompactConversationResponseSchema)` to create a new message.
+ */
+export const CompactConversationResponseSchema: GenMessage<CompactConversationResponse> = /*@__PURE__*/
+  messageDesc(file_anima_v1_harness, 14);
+
+/**
  * @generated from message anima.v1.GetEntriesRequest
  */
 export type GetEntriesRequest = Message<"anima.v1.GetEntriesRequest"> & {
@@ -349,7 +395,7 @@ export type GetEntriesRequest = Message<"anima.v1.GetEntriesRequest"> & {
  * Use `create(GetEntriesRequestSchema)` to create a new message.
  */
 export const GetEntriesRequestSchema: GenMessage<GetEntriesRequest> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 13);
+  messageDesc(file_anima_v1_harness, 15);
 
 /**
  * @generated from message anima.v1.GetEntriesResponse
@@ -376,7 +422,7 @@ export type GetEntriesResponse = Message<"anima.v1.GetEntriesResponse"> & {
  * Use `create(GetEntriesResponseSchema)` to create a new message.
  */
 export const GetEntriesResponseSchema: GenMessage<GetEntriesResponse> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 14);
+  messageDesc(file_anima_v1_harness, 16);
 
 /**
  * @generated from message anima.v1.ModelRef
@@ -398,7 +444,7 @@ export type ModelRef = Message<"anima.v1.ModelRef"> & {
  * Use `create(ModelRefSchema)` to create a new message.
  */
 export const ModelRefSchema: GenMessage<ModelRef> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 15);
+  messageDesc(file_anima_v1_harness, 17);
 
 /**
  * @generated from message anima.v1.ConversationStatus
@@ -449,7 +495,7 @@ export type ConversationStatus = Message<"anima.v1.ConversationStatus"> & {
  * Use `create(ConversationStatusSchema)` to create a new message.
  */
 export const ConversationStatusSchema: GenMessage<ConversationStatus> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 16);
+  messageDesc(file_anima_v1_harness, 18);
 
 /**
  * Display metadata only. Archive does not cancel or delete a conversation.
@@ -492,7 +538,7 @@ export type ConversationInfo = Message<"anima.v1.ConversationInfo"> & {
  * Use `create(ConversationInfoSchema)` to create a new message.
  */
 export const ConversationInfoSchema: GenMessage<ConversationInfo> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 17);
+  messageDesc(file_anima_v1_harness, 19);
 
 /**
  * @generated from message anima.v1.WatchConversationsRequest
@@ -505,7 +551,7 @@ export type WatchConversationsRequest = Message<"anima.v1.WatchConversationsRequ
  * Use `create(WatchConversationsRequestSchema)` to create a new message.
  */
 export const WatchConversationsRequestSchema: GenMessage<WatchConversationsRequest> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 18);
+  messageDesc(file_anima_v1_harness, 20);
 
 /**
  * @generated from message anima.v1.WatchConversationsResponse
@@ -524,7 +570,7 @@ export type WatchConversationsResponse = Message<"anima.v1.WatchConversationsRes
  * Use `create(WatchConversationsResponseSchema)` to create a new message.
  */
 export const WatchConversationsResponseSchema: GenMessage<WatchConversationsResponse> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 19);
+  messageDesc(file_anima_v1_harness, 21);
 
 /**
  * @generated from message anima.v1.UpdateConversationRequest
@@ -573,7 +619,7 @@ export type UpdateConversationRequest = Message<"anima.v1.UpdateConversationRequ
  * Use `create(UpdateConversationRequestSchema)` to create a new message.
  */
 export const UpdateConversationRequestSchema: GenMessage<UpdateConversationRequest> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 20);
+  messageDesc(file_anima_v1_harness, 22);
 
 /**
  * @generated from message anima.v1.UpdateConversationResponse
@@ -586,7 +632,7 @@ export type UpdateConversationResponse = Message<"anima.v1.UpdateConversationRes
  * Use `create(UpdateConversationResponseSchema)` to create a new message.
  */
 export const UpdateConversationResponseSchema: GenMessage<UpdateConversationResponse> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 21);
+  messageDesc(file_anima_v1_harness, 23);
 
 /**
  * @generated from message anima.v1.ListDirectoriesRequest
@@ -612,7 +658,7 @@ export type ListDirectoriesRequest = Message<"anima.v1.ListDirectoriesRequest"> 
  * Use `create(ListDirectoriesRequestSchema)` to create a new message.
  */
 export const ListDirectoriesRequestSchema: GenMessage<ListDirectoriesRequest> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 22);
+  messageDesc(file_anima_v1_harness, 24);
 
 /**
  * @generated from message anima.v1.Directory
@@ -634,7 +680,7 @@ export type Directory = Message<"anima.v1.Directory"> & {
  * Use `create(DirectorySchema)` to create a new message.
  */
 export const DirectorySchema: GenMessage<Directory> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 23);
+  messageDesc(file_anima_v1_harness, 25);
 
 /**
  * @generated from message anima.v1.ListDirectoriesResponse
@@ -666,7 +712,7 @@ export type ListDirectoriesResponse = Message<"anima.v1.ListDirectoriesResponse"
  * Use `create(ListDirectoriesResponseSchema)` to create a new message.
  */
 export const ListDirectoriesResponseSchema: GenMessage<ListDirectoriesResponse> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 24);
+  messageDesc(file_anima_v1_harness, 26);
 
 /**
  * @generated from message anima.v1.ModelInfo
@@ -698,7 +744,7 @@ export type ModelInfo = Message<"anima.v1.ModelInfo"> & {
  * Use `create(ModelInfoSchema)` to create a new message.
  */
 export const ModelInfoSchema: GenMessage<ModelInfo> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 25);
+  messageDesc(file_anima_v1_harness, 27);
 
 /**
  * @generated from message anima.v1.ListModelsRequest
@@ -711,7 +757,7 @@ export type ListModelsRequest = Message<"anima.v1.ListModelsRequest"> & {
  * Use `create(ListModelsRequestSchema)` to create a new message.
  */
 export const ListModelsRequestSchema: GenMessage<ListModelsRequest> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 26);
+  messageDesc(file_anima_v1_harness, 28);
 
 /**
  * @generated from message anima.v1.ListModelsResponse
@@ -728,7 +774,7 @@ export type ListModelsResponse = Message<"anima.v1.ListModelsResponse"> & {
  * Use `create(ListModelsResponseSchema)` to create a new message.
  */
 export const ListModelsResponseSchema: GenMessage<ListModelsResponse> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 27);
+  messageDesc(file_anima_v1_harness, 29);
 
 /**
  * @generated from message anima.v1.UpdateQueuedInputRequest
@@ -781,7 +827,7 @@ export type UpdateQueuedInputRequest = Message<"anima.v1.UpdateQueuedInputReques
  * Use `create(UpdateQueuedInputRequestSchema)` to create a new message.
  */
 export const UpdateQueuedInputRequestSchema: GenMessage<UpdateQueuedInputRequest> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 28);
+  messageDesc(file_anima_v1_harness, 30);
 
 /**
  * @generated from message anima.v1.UpdateQueuedInputResponse
@@ -805,7 +851,7 @@ export type UpdateQueuedInputResponse = Message<"anima.v1.UpdateQueuedInputRespo
  * Use `create(UpdateQueuedInputResponseSchema)` to create a new message.
  */
 export const UpdateQueuedInputResponseSchema: GenMessage<UpdateQueuedInputResponse> = /*@__PURE__*/
-  messageDesc(file_anima_v1_harness, 29);
+  messageDesc(file_anima_v1_harness, 31);
 
 /**
  * What to do when the conversation already has an active run.
@@ -902,6 +948,14 @@ export const HarnessService: GenService<{
     methodKind: "unary";
     input: typeof AbortConversationRequestSchema;
     output: typeof AbortConversationResponseSchema;
+  },
+  /**
+   * @generated from rpc anima.v1.HarnessService.CompactConversation
+   */
+  compactConversation: {
+    methodKind: "unary";
+    input: typeof CompactConversationRequestSchema;
+    output: typeof CompactConversationResponseSchema;
   },
   /**
    * @generated from rpc anima.v1.HarnessService.GetEntries

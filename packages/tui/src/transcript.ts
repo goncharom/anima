@@ -188,6 +188,12 @@ export class Transcript extends Container {
     if (!state.snapshot) this.addChild(line(colors.muted("Loading conversation…")));
     const retry = object(generation.retry);
     if (retry.error) this.addChild(line(colors.yellow(`Retrying: ${clean(String(retry.error))}`)));
+    for (const status of Array.isArray(live.compactions) ? live.compactions : []) {
+      const retry = object(object(status).retry);
+      if (retry.error) this.addChild(line(colors.yellow(`Retrying compaction: ${clean(String(retry.error))}`)));
+    }
+    const compactionFailure = object(live.compactionFailure);
+    if (compactionFailure.error) this.addChild(line(colors.error(`Compaction failed: ${clean(String(compactionFailure.error))}`)));
   }
 
   private addMessage(key: string, create: () => Component) {

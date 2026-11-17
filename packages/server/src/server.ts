@@ -238,6 +238,25 @@ export async function startServer(harness?: Harness, options: { port?: number; m
           await abortConversation(runtime, conversation, context);
           return {};
         },
+        async compactConversation(request, rpc) {
+          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
+          const conversation = await requireConversation(runtime, request.conversationId, context);
+          const taskId = await conversation.compact(request.instructions?.trim() || undefined, context);
+          // Disconnecting cancels these waits, not the admitted Durable task.
+          const { state } = await runtime.waitForTask(taskId, context);
+          const outcome = state.outcome;
+          if (outcome.status === "aborted") throw new ConnectError("Compaction canceled", Code.Canceled);
+          if (outcome.status !== "completed") {
+            throw new ConnectError(outcome.error?.message ?? `Compaction ${outcome.status}: ${outcome.reason}`, Code.FailedPrecondition);
+          }
+          if (outcome.result.submissionId === undefined) return { compacted: false };
+          const submission = await runtime.submission(outcome.result.submissionId, context);
+          if (!submission) throw new ConnectError("Compaction summary is unavailable", Code.Internal);
+          const placed = await submission.wait(context);
+          if (placed.status === "done") return { compacted: true };
+          if (placed.reason === "stale") return { compacted: false };
+          throw new ConnectError(`Compaction summary was not applied: ${placed.reason}`, Code.FailedPrecondition);
+        },
         async *watchConversations(_request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
           const watch = await runtime.watchDoc(ConversationsDoc, context);

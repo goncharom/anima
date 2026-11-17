@@ -12,6 +12,7 @@ service HarnessService {
   rpc WatchTaskGraph(WatchTaskGraphRequest) returns (stream WatchTaskGraphResponse);
   rpc WatchDocument(WatchDocumentRequest) returns (stream WatchDocumentResponse);
   rpc AbortConversation(AbortConversationRequest) returns (AbortConversationResponse);
+  rpc CompactConversation(CompactConversationRequest) returns (CompactConversationResponse);
   rpc GetEntries(GetEntriesRequest) returns (GetEntriesResponse);
   rpc WatchConversations(WatchConversationsRequest) returns (stream WatchConversationsResponse);
   rpc UpdateConversation(UpdateConversationRequest) returns (UpdateConversationResponse);
@@ -112,6 +113,19 @@ message AbortConversationRequest {
 
 // Returned once ordinary foreground work is idle. Background tasks may continue.
 message AbortConversationResponse {}
+
+message CompactConversationRequest {
+  string conversation_id = 1;
+  // Optional guidance for the summary, not a new chat message.
+  optional string instructions = 2;
+}
+
+// Waits for Durable's compaction task and summary placement. Progress/failures are
+// in pi.live; AbortConversation cancels the work. Disconnecting stops only the wait.
+message CompactConversationResponse {
+  // False if nothing was eligible or a newer context change superseded the summary.
+  bool compacted = 1;
+}
 
 message GetEntriesRequest {
   string conversation_id = 1;
