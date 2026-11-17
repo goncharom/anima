@@ -33,7 +33,7 @@ import {
 import { createCodemodeExtension } from "@earendil-works/pi-durable/codemode";
 import { NodeExecutionEnv } from "@earendil-works/pi-durable/env/node";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
-import { CodingTools } from "@earendil-works/pi-durable/tools";
+import { ProjectCodingTools } from "./extensions/project-resources.ts";
 import { BackgroundSubagents, coordinatorCapabilities, SubagentsDoc } from "./extensions/subagents.ts";
 import { createReporter, InputRequests } from "./extensions/conversation-reporter.ts";
 import { openMcp } from "./extensions/mcp.ts";
@@ -72,7 +72,7 @@ export async function createHarness() {
   models.setProvider(openaiProvider());
 
   const registry = createRegistry();
-  registry.install(CodingTools);
+  registry.install(ProjectCodingTools);
   registry.install(BackgroundSubagents);
   const sandbox = new CodemodeSandbox({
     memoryLimitBytes: 256 * 1024 * 1024,
