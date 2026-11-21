@@ -1,0 +1,185 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A110000000000000000000C8 /* AnimaApp.swift in Sources */ = { isa = PBXBuildFile; fileRef = A11000000000000000000064 /* AnimaApp.swift */; };
+		A110000000000000000000C9 /* ChatView.swift in Sources */ = { isa = PBXBuildFile; fileRef = A11000000000000000000065 /* ChatView.swift */; };
+		A110000000000000000000CA /* ConversationModel.swift in Sources */ = { isa = PBXBuildFile; fileRef = A11000000000000000000066 /* ConversationModel.swift */; };
+		A110000000000000000000CB /* MarkdownBody.swift in Sources */ = { isa = PBXBuildFile; fileRef = A11000000000000000000067 /* MarkdownBody.swift */; };
+		A110000000000000000000CC /* PromptEditor.swift in Sources */ = { isa = PBXBuildFile; fileRef = A11000000000000000000068 /* PromptEditor.swift */; };
+		A110000000000000000000CD /* ServerConnection.swift in Sources */ = { isa = PBXBuildFile; fileRef = A11000000000000000000069 /* ServerConnection.swift */; };
+		A110000000000000000000CE /* TerminalStyle.swift in Sources */ = { isa = PBXBuildFile; fileRef = A1100000000000000000006A /* TerminalStyle.swift */; };
+		A110000000000000000000CF /* TranscriptModel.swift in Sources */ = { isa = PBXBuildFile; fileRef = A1100000000000000000006B /* TranscriptModel.swift */; };
+		A110000000000000000000D0 /* TranscriptView.swift in Sources */ = { isa = PBXBuildFile; fileRef = A1100000000000000000006C /* TranscriptView.swift */; };
+		A110000000000000000000D1 /* WorkspaceDialogs.swift in Sources */ = { isa = PBXBuildFile; fileRef = A1100000000000000000006D /* WorkspaceDialogs.swift */; };
+		A110000000000000000000D2 /* WorkspaceModel.swift in Sources */ = { isa = PBXBuildFile; fileRef = A1100000000000000000006E /* WorkspaceModel.swift */; };
+		A110000000000000000000D3 /* WorkspaceView.swift in Sources */ = { isa = PBXBuildFile; fileRef = A1100000000000000000006F /* WorkspaceView.swift */; };
+		A11000000000000000000118 /* Iosevka-Extended.ttf in Resources */ = { isa = PBXBuildFile; fileRef = A110000000000000000000B4 /* Iosevka-Extended.ttf */; };
+		A11000000000000000000119 /* Iosevka-LICENSE.txt in Resources */ = { isa = PBXBuildFile; fileRef = A110000000000000000000B5 /* Iosevka-LICENSE.txt */; };
+		A1100000000000000000011A /* Anima.icns in Resources */ = { isa = PBXBuildFile; fileRef = A110000000000000000000B8 /* Anima.icns */; };
+		A11000000000000000000033 /* AnimaProtocol in Frameworks */ = { isa = PBXBuildFile; productRef = A11000000000000000000029 /* AnimaProtocol */; };
+		A11000000000000000000034 /* Connect in Frameworks */ = { isa = PBXBuildFile; productRef = A1100000000000000000002A /* Connect */; };
+		A11000000000000000000035 /* SwiftProtobuf in Frameworks */ = { isa = PBXBuildFile; productRef = A1100000000000000000002B /* SwiftProtobuf */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A11000000000000000000064 /* AnimaApp.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimaApp.swift; sourceTree = "<group>"; };
+		A11000000000000000000065 /* ChatView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		A11000000000000000000066 /* ConversationModel.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationModel.swift; sourceTree = "<group>"; };
+		A11000000000000000000067 /* MarkdownBody.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownBody.swift; sourceTree = "<group>"; };
+		A11000000000000000000068 /* PromptEditor.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEditor.swift; sourceTree = "<group>"; };
+		A11000000000000000000069 /* ServerConnection.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConnection.swift; sourceTree = "<group>"; };
+		A1100000000000000000006A /* TerminalStyle.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalStyle.swift; sourceTree = "<group>"; };
+		A1100000000000000000006B /* TranscriptModel.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptModel.swift; sourceTree = "<group>"; };
+		A1100000000000000000006C /* TranscriptView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptView.swift; sourceTree = "<group>"; };
+		A1100000000000000000006D /* WorkspaceDialogs.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceDialogs.swift; sourceTree = "<group>"; };
+		A1100000000000000000006E /* WorkspaceModel.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceModel.swift; sourceTree = "<group>"; };
+		A1100000000000000000006F /* WorkspaceView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceView.swift; sourceTree = "<group>"; };
+		A110000000000000000000B4 /* Iosevka-Extended.ttf */ = { isa = PBXFileReference; lastKnownFileType = file; path = "Iosevka-Extended.ttf"; sourceTree = "<group>"; };
+		A110000000000000000000B5 /* Iosevka-LICENSE.txt */ = { isa = PBXFileReference; lastKnownFileType = text; path = "Iosevka-LICENSE.txt"; sourceTree = "<group>"; };
+		A110000000000000000000B8 /* Anima.icns */ = { isa = PBXFileReference; lastKnownFileType = image.icns; path = Anima.icns; sourceTree = "<group>"; };
+		A11000000000000000000008 /* Anima.app */ = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Anima.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A110000000000000000000B6 /* Info.plist */ = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A110000000000000000000B7 /* Anima.entitlements */ = { isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Anima.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1100000000000000000000C /* Frameworks */ = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A11000000000000000000033 /* AnimaProtocol in Frameworks */, A11000000000000000000034 /* Connect in Frameworks */, A11000000000000000000035 /* SwiftProtobuf in Frameworks */,); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A11000000000000000000004 /* Main Group */ = { isa = PBXGroup; children = (A11000000000000000000005 /* Anima */, A11000000000000000000007 /* Products */,); sourceTree = "<group>"; };
+		A11000000000000000000005 /* Anima */ = { isa = PBXGroup; children = (A11000000000000000000064 /* AnimaApp.swift */, A11000000000000000000065 /* ChatView.swift */, A11000000000000000000066 /* ConversationModel.swift */, A11000000000000000000067 /* MarkdownBody.swift */, A11000000000000000000068 /* PromptEditor.swift */, A11000000000000000000069 /* ServerConnection.swift */, A1100000000000000000006A /* TerminalStyle.swift */, A1100000000000000000006B /* TranscriptModel.swift */, A1100000000000000000006C /* TranscriptView.swift */, A1100000000000000000006D /* WorkspaceDialogs.swift */, A1100000000000000000006E /* WorkspaceModel.swift */, A1100000000000000000006F /* WorkspaceView.swift */, A11000000000000000000006 /* Resources */, A110000000000000000000B6 /* Info.plist */, A110000000000000000000B7 /* Anima.entitlements */,); path = Anima; sourceTree = "<group>"; };
+		A11000000000000000000006 /* Resources */ = { isa = PBXGroup; children = (A110000000000000000000B8 /* Anima.icns */, A110000000000000000000B4 /* Iosevka-Extended.ttf */, A110000000000000000000B5 /* Iosevka-LICENSE.txt */,); path = Resources; sourceTree = "<group>"; };
+		A11000000000000000000007 /* Products */ = { isa = PBXGroup; children = (A11000000000000000000008 /* Anima.app */,); name = Products; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A11000000000000000000002 /* Anima */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A11000000000000000000015;
+			buildPhases = (A1100000000000000000000B /* Sources */, A1100000000000000000000C /* Frameworks */, A1100000000000000000000D /* Resources */,);
+			buildRules = ();
+			dependencies = ();
+			name = Anima;
+			packageProductDependencies = (A11000000000000000000029 /* AnimaProtocol */, A1100000000000000000002A /* Connect */, A1100000000000000000002B /* SwiftProtobuf */,);
+			productName = Anima;
+			productReference = A11000000000000000000008 /* Anima.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A11000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = { BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 2600; };
+			buildConfigurationList = A11000000000000000000014;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base,);
+			mainGroup = A11000000000000000000004;
+			packageReferences = (A1100000000000000000001F /* AnimaProtocol */, A11000000000000000000020 /* Connect */, A11000000000000000000021 /* SwiftProtobuf */,);
+			productRefGroup = A11000000000000000000007;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (A11000000000000000000002 /* Anima */,);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A1100000000000000000000D /* Resources */ = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A1100000000000000000011A /* Anima.icns in Resources */, A11000000000000000000118 /* Iosevka-Extended.ttf in Resources */, A11000000000000000000119 /* Iosevka-LICENSE.txt in Resources */,); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A1100000000000000000000B /* Sources */ = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A110000000000000000000C8 /* AnimaApp.swift in Sources */, A110000000000000000000C9 /* ChatView.swift in Sources */, A110000000000000000000CA /* ConversationModel.swift in Sources */, A110000000000000000000CB /* MarkdownBody.swift in Sources */, A110000000000000000000CC /* PromptEditor.swift in Sources */, A110000000000000000000CD /* ServerConnection.swift in Sources */, A110000000000000000000CE /* TerminalStyle.swift in Sources */, A110000000000000000000CF /* TranscriptModel.swift in Sources */, A110000000000000000000D0 /* TranscriptView.swift in Sources */, A110000000000000000000D1 /* WorkspaceDialogs.swift in Sources */, A110000000000000000000D2 /* WorkspaceModel.swift in Sources */, A110000000000000000000D3 /* WorkspaceView.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A11000000000000000000016 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A11000000000000000000017 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		A11000000000000000000018 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Anima/Anima.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Anima/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.anima.macos;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+			};
+			name = Debug;
+		};
+		A11000000000000000000019 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Anima/Anima.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Anima/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.anima.macos;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A11000000000000000000014 /* Project */ = { isa = XCConfigurationList; buildConfigurations = (A11000000000000000000016 /* Debug */, A11000000000000000000017 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A11000000000000000000015 /* Anima */ = { isa = XCConfigurationList; buildConfigurations = (A11000000000000000000018 /* Debug */, A11000000000000000000019 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A1100000000000000000001F /* AnimaProtocol */ = { isa = XCLocalSwiftPackageReference; relativePath = "../../packages/protocol-swift"; };
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A11000000000000000000020 /* Connect */ = { isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/connectrpc/connect-swift.git"; requirement = { kind = exactVersion; version = 1.2.3; }; };
+		A11000000000000000000021 /* SwiftProtobuf */ = { isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/apple/swift-protobuf.git"; requirement = { kind = exactVersion; version = 1.39.0; }; };
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A11000000000000000000029 /* AnimaProtocol */ = { isa = XCSwiftPackageProductDependency; package = A1100000000000000000001F /* AnimaProtocol */; productName = AnimaProtocol; };
+		A1100000000000000000002A /* Connect */ = { isa = XCSwiftPackageProductDependency; package = A11000000000000000000020 /* Connect */; productName = Connect; };
+		A1100000000000000000002B /* SwiftProtobuf */ = { isa = XCSwiftPackageProductDependency; package = A11000000000000000000021 /* SwiftProtobuf */; productName = SwiftProtobuf; };
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A11000000000000000000001 /* Project object */;
+}
