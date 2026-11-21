@@ -1,3 +1,5 @@
 node_modules/
 .DS_Store
 /.anima/
+/packages/protocol-swift/.build/
+/packages/protocol-swift/.swiftpm/
