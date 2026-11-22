@@ -19,7 +19,7 @@ Then connect the app to `127.0.0.1:4242` with HTTPS off. For a directly reachabl
 ## Workspace
 
 - **Conversations** on the left and **Subagents** on the right. Select a subagent to open its own transcript and composer. Drag the dividers to resize, or use `/resize left|right columns`. On narrow windows, the agents panel opens as a drawer. Transitions respect macOS Reduce Motion.
-- **Transcript** streams messages, thinking, tool calls/results and progress. Click a tool to expand it, use **Load older messages** to page back, and **↓ Latest** to resume following. Search operates on loaded history.
+- **Transcript** streams messages, thinking, tool calls/results and progress. Drag across paragraphs or code within a response and press `⌘C` to copy. Each expandable tool has its own text selection. Use **Load older messages** to page back and **↓ Latest** to resume following. Search operates on loaded history.
 - **Composer** supports steering, follow-ups, draft recall, slash completion, and the same slash commands as the TUI. Use `/help` or the command palette. The conversation menu exposes rename, archive, folder changes, model selection, queue editing/withdrawal, compaction and stop controls. The footer shows current model, thinking level and approximate context use.
 - Archiving, closing the app, or changing endpoints does not stop server work. Use **Stop** for the selected conversation.
 

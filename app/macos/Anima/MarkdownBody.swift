@@ -5,88 +5,115 @@ struct MarkdownBody: View {
     let text: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(Array(MarkdownBlock.parse(text).enumerated()), id: \.offset) { _, block in
-                switch block {
-                case .paragraph(let value): inline(value)
-                case .heading(let level, let title):
-                    inline(title).font(Terminal.font(level < 3 ? 14 : 13)).bold().foregroundStyle(Terminal.text)
-                        .accessibilityAddTraits(.isHeader)
-                case .list(let marker, let value):
-                    HStack(alignment: .firstTextBaseline, spacing: 7) {
-                        Text(marker).foregroundStyle(Terminal.accent)
-                        inline(value)
-                    }
-                    .padding(.leading, 6)
-                case .quote(let value):
-                    inline(value).foregroundStyle(Terminal.muted).padding(.leading, 10)
-                        .overlay(alignment: .leading) { TerminalRule(vertical: true) }
-                case .code(let language, let value): CodeBlock(text: value, language: language)
-                case .rule: TerminalRule()
-                }
-            }
-        }
-        .font(Terminal.font()).foregroundStyle(Terminal.text)
-        .environment(\.openURL, OpenURLAction { url in
-            guard let scheme = url.scheme?.lowercased(), ["https", "http", "mailto"].contains(scheme) else { return .discarded }
-            return .systemAction
-        })
+        TranscriptText(content: formatted)
     }
 
-    private func inline(_ value: String) -> some View {
+    private var formatted: NSAttributedString {
+        // One attributed string, including fenced code, so a drag can cross any
+        // paragraph, list, heading, or code boundary within this response.
+        let result = NSMutableAttributedString()
+        var previousWasList = false
+        for block in MarkdownBlock.parse(text) {
+            let style = NSMutableParagraphStyle()
+            style.lineSpacing = 2
+            let content: NSAttributedString
+            var isList = false
+            switch block {
+            case .paragraph(let value):
+                content = inline(value, style: style)
+            case .heading(let level, let title):
+                content = inline(title, size: level < 3 ? 14 : 13, bold: true, style: style)
+            case .list(let marker, let value):
+                isList = true
+                style.firstLineHeadIndent = 6
+                style.headIndent = 6 + CGFloat(marker.count + 1) * Terminal.columnWidth
+                style.tabStops = [NSTextTab(textAlignment: .left, location: style.headIndent)]
+                let item = NSMutableAttributedString(string: marker + "\t", attributes: Markup.attributes(color: Terminal.accent, style: style))
+                item.append(inline(value, style: style))
+                content = item
+            case .quote(let value):
+                style.firstLineHeadIndent = 10
+                style.headIndent = 10
+                content = inline(value, color: Terminal.muted, style: style)
+            case .code(let language, let value):
+                content = Markup.code(value, diff: language == "diff" || language == "patch", highlight: true)
+            case .rule:
+                content = NSAttributedString(string: String(repeating: "─", count: 16), attributes: Markup.attributes(color: Terminal.muted))
+            }
+            guard content.length > 0 else { continue }
+            Markup.separate(result, gap: !(isList && previousWasList))
+            result.append(content)
+            previousWasList = isList
+        }
+        return result
+    }
+
+    private func inline(_ value: String, size: CGFloat = Terminal.textSize, bold: Bool = false,
+                        color: Color = Terminal.text, style: NSParagraphStyle) -> NSAttributedString {
         let content = (try? AttributedString(markdown: value, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
             ?? AttributedString(value)
-        return Text(content).tint(Terminal.accent).textSelection(.enabled)
-            .lineSpacing(2).fixedSize(horizontal: false, vertical: true)
+        let result = NSMutableAttributedString()
+        for run in content.runs {
+            var attributes = Markup.attributes(size: size, color: color, style: style)
+            let intent = run.inlinePresentationIntent ?? []
+            var traits: NSFontTraitMask = []
+            if bold || intent.contains(.stronglyEmphasized) { traits.insert(.boldFontMask) }
+            if intent.contains(.emphasized) { traits.insert(.italicFontMask) }
+            if !traits.isEmpty { attributes[.font] = NSFontManager.shared.convert(Terminal.nativeFont(size), toHaveTrait: traits) }
+            if intent.contains(.strikethrough) { attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue }
+            if intent.contains(.code) { attributes[.backgroundColor] = NSColor(Terminal.surface) }
+            if let url = run.link, let scheme = url.scheme?.lowercased(), ["https", "http", "mailto"].contains(scheme) {
+                attributes[.link] = url
+            }
+            result.append(NSAttributedString(string: String(content[run.range].characters), attributes: attributes))
+        }
+        return result
     }
 }
 
-struct CodeBlock: View {
-    let text: String
-    let language: String
-    var outlined = true
-    @State private var copied = false
+struct ToolOutputText: View {
+    let sections: [(label: String, text: String)]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 6) {
-                Text(language.isEmpty ? "code" : language)
-                    .font(Terminal.font(Terminal.metaSize)).foregroundStyle(Terminal.muted).lineLimit(1)
-                Spacer()
-                TerminalIcon(symbol: copied ? "checkmark" : "document.on.document", label: "Copy \(language.isEmpty ? "code" : language)") {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(text, forType: .string)
-                    copied = true
-                }
-            }
-            .padding(.horizontal, 7).frame(height: Terminal.controlSize)
-            TerminalRule()
-            ScrollView(.horizontal) {
-                displayedCode.font(Terminal.font(Terminal.labelSize)).textSelection(.enabled)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .padding(7)
-            }
+        let content = NSMutableAttributedString()
+        for section in sections {
+            Markup.separate(content, gap: true)
+            content.append(NSAttributedString(string: section.label + "\n", attributes: Markup.attributes(size: Terminal.metaSize, color: Terminal.muted)))
+            content.append(Markup.code(section.text, diff: section.label == "diff"))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(outlined ? Terminal.surface : Terminal.black, in: RoundedRectangle(cornerRadius: 4))
-        .overlay { RoundedRectangle(cornerRadius: 4).strokeBorder(Terminal.border).allowsHitTesting(false) }
-        .task(id: copied) {
-            if copied {
-                do { try await Task.sleep(for: .seconds(1.3)); copied = false } catch {}
-            }
-        }
+        return TranscriptText(content: content)
+    }
+}
+
+@MainActor private enum Markup {
+    static func attributes(size: CGFloat = Terminal.textSize, color: Color = Terminal.text,
+                           style: NSParagraphStyle = .default) -> [NSAttributedString.Key: Any] {
+        [.font: Terminal.nativeFont(size), .foregroundColor: NSColor(color), .paragraphStyle: style]
     }
 
-    private var displayedCode: Text {
-        guard language == "diff" || language == "patch" else { return Text(text).foregroundColor(Terminal.text) }
-        var attributed = AttributedString()
-        for line in text.split(separator: "\n", omittingEmptySubsequences: false) {
-            if !attributed.characters.isEmpty { attributed.append(AttributedString("\n")) }
-            var part = AttributedString(String(line))
-            part.foregroundColor = line.hasPrefix("+") ? Terminal.good : line.hasPrefix("-") ? Terminal.red : Terminal.text
-            attributed.append(part)
+    static func code(_ text: String, diff: Bool, highlight: Bool = false) -> NSAttributedString {
+        let style = NSMutableParagraphStyle()
+        style.defaultTabInterval = 4 * Terminal.columnWidth
+        var base = attributes(size: Terminal.labelSize, style: style)
+        if highlight { base[.backgroundColor] = NSColor(Terminal.surface) }
+        guard diff else { return NSAttributedString(string: text, attributes: base) }
+        let result = NSMutableAttributedString()
+        for (index, line) in text.split(separator: "\n", omittingEmptySubsequences: false).enumerated() {
+            if index > 0 { result.append(NSAttributedString(string: "\n", attributes: base)) }
+            var themed = base
+            if line.hasPrefix("+") { themed[.foregroundColor] = NSColor(Terminal.good) }
+            else if line.hasPrefix("-") { themed[.foregroundColor] = NSColor(Terminal.red) }
+            result.append(NSAttributedString(string: String(line), attributes: themed))
         }
-        return Text(attributed)
+        return result
+    }
+
+    static func separate(_ output: NSMutableAttributedString, gap: Bool) {
+        guard output.length > 0 else { return }
+        var last = output.attributes(at: output.length - 1, effectiveRange: nil)
+        last[.link] = nil
+        output.append(NSAttributedString(string: "\n", attributes: last))
+        if gap { output.append(NSAttributedString(string: "\n", attributes: attributes(size: 4))) }
     }
 }
 

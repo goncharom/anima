@@ -16,6 +16,7 @@ struct TranscriptView: View {
     @State private var contentHeight: CGFloat = 0
     @State private var viewportHeight: CGFloat = 0
     @State private var userScroll = false
+    @State private var selection = TranscriptSelection()
     @State private var scroll = ScrollPosition(idType: String.self, edge: .bottom)
     @FocusState private var searchFocused: Bool
 
@@ -53,15 +54,22 @@ struct TranscriptView: View {
     private func transcript(_ visible: [TranscriptRow], matches: Set<String>) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 9) {
+                // Measure the loaded page before using its coordinates for history and selection.
+                VStack(alignment: .leading, spacing: 9) {
                     Color.clear.frame(height: 1).id(start).accessibilityHidden(true)
                     if chat.olderCursor != nil {
                         Button(chat.loadingOlder ? "Loading history…" : "↑  Load older messages") {
+                            onActivate()
                             chat.followsLatest = false
+                            let visibleID = scroll.viewID(type: String.self)
+                            let anchor = visible.first(where: { $0.id == visibleID })?.id ?? visible.first?.id
+                            let previousOffset = contentOffset
                             Task {
-                                if await chat.loadOlder() {
-                                    chat.scrollPositionID = start
-                                    proxy.scrollTo(start, anchor: .top)
+                                // Keep the current page's first visible entry in view. If the user
+                                // scrolled while fetching, leave the current scroll target alone.
+                                if await chat.loadOlder(), let anchor, abs(contentOffset - previousOffset) < 1 {
+                                    chat.scrollPositionID = anchor
+                                    scroll.scrollTo(id: anchor, anchor: .top)
                                 }
                             }
                         }
@@ -96,7 +104,8 @@ struct TranscriptView: View {
                 contentOffset = bounds.y
                 contentHeight = bounds.height
                 viewportHeight = bounds.viewport
-                if userScroll || (scroll.isPositionedByUser && previous.y != bounds.y && previous.height == bounds.height) {
+                if !selection.isDragging,
+                   userScroll || (scroll.isPositionedByUser && previous.y != bounds.y && previous.height == bounds.height) {
                     chat.followsLatest = bounds.y + bounds.viewport >= bounds.height - 28
                     if let id = scroll.viewID(type: String.self), id != Self.end { chat.scrollPositionID = id }
                 }
@@ -105,20 +114,21 @@ struct TranscriptView: View {
                 userScroll = phase == .interacting || phase == .decelerating
             }
             .onChange(of: chat.transcript) {
-                if chat.followsLatest && !userScroll { proxy.scrollTo(Self.end, anchor: .bottom) }
+                if chat.followsLatest && !userScroll && !selection.holdsPosition { proxy.scrollTo(Self.end, anchor: .bottom) }
             }
             .onChange(of: hideThinking) {
-                if chat.followsLatest { proxy.scrollTo(Self.end, anchor: .bottom) }
+                if chat.followsLatest && !selection.holdsPosition { proxy.scrollTo(Self.end, anchor: .bottom) }
             }
             .onChange(of: chat.historyEpoch) { followLatest(proxy) }
             .onChange(of: matchID) { if let matchID { proxy.scrollTo(matchID, anchor: .center) } }
             .onChange(of: navigation) {
                 if let navigation { navigate(navigation.target, visible: visible, proxy: proxy) }
             }
-            .simultaneousGesture(TapGesture().onEnded(onActivate))
+            .environment(\.transcriptTextInteraction, .init(selection: selection, activate: onActivate))
             .overlay(alignment: .bottomTrailing) {
-                if !chat.followsLatest {
+                if !chat.followsLatest || (selection.holdsPosition && contentHeight - contentOffset - viewportHeight > 28) {
                     Button("↓ Latest") {
+                        onActivate()
                         if contentHeight - contentOffset - viewportHeight < viewportHeight * 2 {
                             withAnimation(Terminal.motion(reduced: reduceMotion)) { followLatest(proxy) }
                         } else { followLatest(proxy) }
@@ -135,6 +145,7 @@ struct TranscriptView: View {
         case .tool(let id):
             if let tool = chat.transcript.tools[id] {
                 ToolCard(tool: tool, expanded: chat.toolExpanded(id) || matchID == row.id) {
+                    onActivate()
                     withAnimation(Terminal.motion(reduced: reduceMotion)) {
                         if matchID == row.id { matchID = nil }
                         else { chat.toggleTool(id) }
@@ -257,6 +268,7 @@ struct TranscriptView: View {
     }
 
     private func followLatest(_ proxy: ScrollViewProxy) {
+        selection.release()
         chat.followsLatest = true
         chat.scrollPositionID = nil
         scroll.scrollTo(edge: .bottom)
@@ -334,17 +346,20 @@ private struct ToolCard: View {
             .accessibilityLabel("\(tool.name), \(tool.state.rawValue), \(expanded ? "collapse" : "expand") tool details")
             if expanded {
                 TerminalRule()
+                let sections: [(label: String, text: String)] = [
+                    ("args", tool.argumentText), ("output", tool.output), ("diff", tool.diff), ("details", tool.detailText)
+                ].compactMap { label, text in
+                    guard let text, !text.isEmpty else { return nil }
+                    return (label, text)
+                }
                 VStack(alignment: .leading, spacing: 7) {
-                    if let arguments = tool.argumentText { CodeBlock(text: arguments, language: "args", outlined: false) }
-                    if !tool.output.isEmpty { CodeBlock(text: tool.output, language: "output", outlined: false) }
-                    if let diff = tool.diff, !diff.isEmpty { CodeBlock(text: diff, language: "diff", outlined: false) }
-                    if let details = tool.detailText { CodeBlock(text: details, language: "details", outlined: false) }
+                    if !sections.isEmpty { ToolOutputText(sections: sections) }
                     ForEach(Array(tool.images.enumerated()), id: \.offset) { _, image in TranscriptImage(payload: image) }
                     if let ms = tool.duration, ms.isFinite, ms >= 0 {
                         Text(Duration.milliseconds(ms).formatted(.units(allowed: [.seconds, .milliseconds], width: .abbreviated)))
                             .font(Terminal.font(Terminal.metaSize)).foregroundStyle(Terminal.muted)
                     }
-                    if tool.argumentText == nil, tool.output.isEmpty, tool.images.isEmpty, tool.duration == nil, tool.details == nil {
+                    if sections.isEmpty, tool.images.isEmpty, tool.duration == nil {
                         Text("No output yet.").font(Terminal.font(Terminal.labelSize)).foregroundStyle(Terminal.muted)
                     }
                 }

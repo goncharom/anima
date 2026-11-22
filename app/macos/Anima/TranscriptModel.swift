@@ -215,26 +215,38 @@ struct TranscriptContent: Equatable {
         switch message["role"]?.text {
         case "user", "assistant":
             let style: TranscriptRow.Style = message["role"]?.text == "assistant" ? .assistant : (delegated ? .delegated : .user)
+            let textID = style == .assistant ? "\(id):response" : id
             if delegated, let delegatedText {
-                appendText(delegatedText, style, id: id)
+                appendText(delegatedText, style, id: textID)
             } else if let text = content?.text {
-                appendText(text, style, id: id, streaming: streaming)
+                appendText(text, style, id: textID, streaming: streaming)
             } else {
-                for (index, part) in (content?.items ?? []).enumerated() {
+                let parts = content?.items ?? []
+                var responseParts: [String] = []
+                var calls: [Google_Protobuf_Struct] = []
+                for (index, part) in parts.enumerated() {
                     guard let block = part.object else { continue }
                     let key = "\(id):\(index)"
                     switch block["type"]?.text {
-                    case "text": appendText(block["text"]?.text ?? "", style, id: key, streaming: streaming)
+                    case "text":
+                        guard let text = block["text"]?.text, !text.isEmpty else { continue }
+                        if style == .assistant { responseParts.append(text) }
+                        else { appendText(text, style, id: key, streaming: streaming) }
                     case "thinking": appendText(block["thinking"]?.text ?? "", .thinking, id: key, streaming: streaming)
                     case "image":
                         if let image = InlineImage(block) { rows.append(.init(id: key, content: .image(image))) }
-                    case "toolCall":
-                        guard let call = block["id"]?.text else { continue }
-                        var tool = tools[call] ?? TranscriptTool(name: block["name"]?.text ?? "tool", state: streaming ? .pending : .stopped)
-                        tool.arguments = block["arguments"]?.object ?? tool.arguments
-                        putTool(tool, id: call)
+                    case "toolCall": calls.append(block)
                     default: break
                     }
+                }
+                // Prose blocks from the same response share a selection range.
+                // Tool disclosures remain separate, in call order below the response.
+                appendText(responseParts.joined(separator: "\n\n"), style, id: textID, streaming: streaming)
+                for block in calls {
+                    guard let call = block["id"]?.text else { continue }
+                    var tool = tools[call] ?? TranscriptTool(name: block["name"]?.text ?? "tool", state: streaming ? .pending : .stopped)
+                    tool.arguments = block["arguments"]?.object ?? tool.arguments
+                    putTool(tool, id: call)
                 }
             }
             if let error = message["errorMessage"]?.text { appendText(error, .error, id: "\(id):error") }
