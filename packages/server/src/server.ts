@@ -6,8 +6,7 @@ import { BusyBehavior, ConversationSnapshotSchema, HarnessService } from "@anima
 import { create, type JsonObject } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
-import type { Context } from "@earendil-works/chord";
-import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
+import { BACKGROUND_CONTEXT, withAbortSignal, type Context } from "@earendil-works/chord/context";
 import { createModels, type Models } from "@earendil-works/pi-ai/models";
 import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
 import { CodemodeSandbox } from "@earendil-works/pi-codemode";
@@ -82,11 +81,8 @@ export async function createHarness() {
       return () => { activeCodemodeWorkers--; };
     },
   });
-  const codemode = createCodemodeExtension({ sandbox });
-  registry.install(codemode);
-  const mcp = await openMcp(registry, (namespaces) => {
-    registry.install(createCodemodeExtension({ sandbox, namespaces }));
-  }).catch(async (error) => {
+  registry.install(createCodemodeExtension({ sandbox }));
+  const mcp = await openMcp(registry).catch(async (error) => {
     await sandbox.close();
     throw error;
   });
@@ -210,7 +206,7 @@ export async function startServer(harness?: Harness, options: { port?: number; m
         },
         async *watchTaskGraph(_request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
-          for await (const graph of watchValues(await runtime.watchTaskGraph(context))) {
+          for await (const { value: graph } of watchValues(await runtime.watchTaskGraph(context))) {
             yield { graph: jsonObject(graph) };
           }
         },
@@ -228,8 +224,8 @@ export async function startServer(harness?: Harness, options: { port?: number; m
           if (watch === undefined) {
             throw new ConnectError("Document not found", Code.NotFound);
           }
-          for await (const value of watchValues(watch)) {
-            yield { value: value === null ? undefined : jsonObject(value), retired: value === null };
+          for await (const { value, retired } of watchValues(watch)) {
+            yield { value: retired ? undefined : jsonObject(value), retired };
           }
         },
         async abortConversation(request, rpc) {
@@ -261,8 +257,8 @@ export async function startServer(harness?: Harness, options: { port?: number; m
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
           const watch = await runtime.watchDoc(ConversationsDoc, context);
           if (!watch) throw new ConnectError("Conversation directory is unavailable", Code.FailedPrecondition);
-          for await (const directory of watchValues(watch)) {
-            if (directory) yield { conversations: Object.values(directory.conversations) };
+          for await (const { value: directory, retired } of watchValues(watch)) {
+            if (!retired) yield { conversations: Object.values(directory.conversations) };
           }
         },
         async updateConversation(request, rpc) {
@@ -403,16 +399,20 @@ function jsonObject(value: object): JsonObject {
 
 /** Bridge Durable state watches to bounded replacement streams, not an event queue. */
 async function* watchValues<T>(watch: WatchHandle<T>, refreshMs?: number) {
-  let pending: { value: T } | undefined = { value: watch.value };
+  let pending: { value: T; retired: boolean } | undefined = { value: watch.value, retired: false };
   let ended: WatchEnd | undefined;
   let wake = Promise.withResolvers<void>();
-  watch.start(async (value) => {
-    pending = { value };
-    wake.resolve();
+  watch.start(async (call) => {
+    // Transient failures leave the last value valid. A retirement must not be
+    // coalesced away if a document at the same address is created again.
+    if (call.kind === "value" && !pending?.retired) {
+      pending = { value: call.value, retired: call.retired };
+      wake.resolve();
+    }
   });
   // Refresh derived Git status while idle, only while a client is attached.
   const timer = refreshMs === undefined ? undefined : setInterval(() => {
-    pending ??= { value: watch.value };
+    pending ??= { value: watch.value, retired: false };
     wake.resolve();
   }, refreshMs);
   timer?.unref();
@@ -423,11 +423,12 @@ async function* watchValues<T>(watch: WatchHandle<T>, refreshMs?: number) {
   try {
     while (true) {
       if (pending !== undefined) {
-        const { value } = pending;
+        const frame = pending;
         pending = undefined;
-        yield value;
+        yield frame;
+        if (frame.retired) return;
       } else if (ended !== undefined) {
-        if (ended.reason === "session_failed" || ended.reason === "listener_error") {
+        if (ended.kind === "failed" || ended.kind === "listener_error") {
           throw new ConnectError("Watch failed", Code.Unavailable);
         }
         return;
@@ -446,7 +447,7 @@ async function* watchValues<T>(watch: WatchHandle<T>, refreshMs?: number) {
 async function* watchConversation(conversation: Conversation, models: Models | undefined, context: Context) {
   const status = conversationStatus(conversation, models);
   let cached: { newest: number; page: Awaited<ReturnType<typeof historyPage>> } | undefined;
-  for await (const view of watchValues(await conversation.watch(context), 5_000)) {
+  for await (const { value: view } of watchValues(await conversation.watch(context), 5_000)) {
     // Durable's view is active model context; include raw history and custom entries too.
     const newest = view.entries.reduce((id, entry) => Math.max(id, entry.id), 0);
     if (cached?.newest !== newest) cached = { newest, page: await historyPage(conversation, newest, 50, context) };

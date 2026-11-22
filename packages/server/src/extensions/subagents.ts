@@ -1,5 +1,5 @@
 // Background subagents with automatic follow-up reports, based on Durable's example 22.
-import { Type } from "@earendil-works/pi-ai";
+import { obj, opt, str } from "@earendil-works/pi-schema";
 import {
   configure,
   defineDoc,
@@ -73,11 +73,11 @@ const subagent = defineTool({
     "Give it a short name, a short task title, and a self-contained message with all context it needs. It inherits your working directory " +
     "and starts with openai/gpt-6-luna at high thinking with coding tools, but cannot create subagents. Its final answer (or failure) will " +
     "automatically arrive here as a follow-up message. The result includes its conversationId.",
-  parameters: Type.Object({
-    name: Type.String({ minLength: 1, description: "A short label for this subagent." }),
-    taskTitle: Type.String({ minLength: 1, maxLength: 120, description: "A short plain-text title for its assignment." }),
-    message: Type.String({ minLength: 1, description: "The complete task and relevant context for the subagent." }),
-  }),
+  parameters: obj({
+    name: str({ minLength: 1, description: "A short label for this subagent." }),
+    taskTitle: str({ minLength: 1, maxLength: 120, description: "A short plain-text title for its assignment." }),
+    message: str({ minLength: 1, description: "The complete task and relevant context for the subagent." }),
+  }, { open: true }),
   replay: "safe",
   execute: async ({ name, taskTitle, message }, api, context) => {
     name = displayName(name);
@@ -122,11 +122,11 @@ const sendMessage = defineTool({
     "starting another agent for related work. An optional taskTitle immediately changes its displayed assignment title; omit it to retain the current title. " +
     "Returns immediately; the answer is automatically reported here. " +
     "A busy child receives this at its next tool boundary (not after its entire assignment).",
-  parameters: Type.Object({
-    conversationId: Type.String({ minLength: 1, description: "An existing subagent conversationId returned by subagent." }),
-    taskTitle: Type.Optional(Type.String({ minLength: 1, maxLength: 120, description: "Optional new short title for the worker's current assignment; omission retains its existing title." })),
-    message: Type.String({ minLength: 1, description: "The follow-up instruction and relevant context." }),
-  }),
+  parameters: obj({
+    conversationId: str({ minLength: 1, description: "An existing subagent conversationId returned by subagent." }),
+    taskTitle: opt(str({ minLength: 1, maxLength: 120, description: "Optional new short title for the worker's current assignment; omission retains its existing title." })),
+    message: str({ minLength: 1, description: "The follow-up instruction and relevant context." }),
+  }, { open: true }),
   replay: "safe",
   execute: async ({ conversationId, message, taskTitle }, api, context) => {
     if (taskTitle !== undefined) taskTitle = displayTaskTitle(taskTitle);

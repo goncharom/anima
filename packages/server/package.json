@@ -16,12 +16,13 @@
     "@bufbuild/protobuf": "2.16.0",
     "@connectrpc/connect": "2.3.0",
     "@connectrpc/connect-node": "2.3.0",
-    "@earendil-works/chord": "1.4.0",
-    "@earendil-works/pi-ai": "1.4.0",
-    "@earendil-works/pi-codemode": "1.4.0",
-    "@earendil-works/pi-coding-agent": "1.4.0",
-    "@earendil-works/pi-durable": "1.4.0",
-    "@earendil-works/pi-mcp": "1.4.0"
+    "@earendil-works/chord": "1.6.0",
+    "@earendil-works/pi-ai": "1.6.0",
+    "@earendil-works/pi-codemode": "1.6.0",
+    "@earendil-works/pi-coding-agent": "1.6.0",
+    "@earendil-works/pi-durable": "1.6.0",
+    "@earendil-works/pi-mcp": "1.6.0",
+    "@earendil-works/pi-schema": "1.6.0"
   },
   "devDependencies": {
     "@types/node": "24.19.2",

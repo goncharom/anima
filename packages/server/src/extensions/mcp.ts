@@ -2,10 +2,9 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { Type } from "@earendil-works/pi-ai";
 import { defineExtension, defineTool, type JsonObject, type Registry, type ToolRegistration } from "@earendil-works/pi-durable";
-import type { CodemodeNamespace } from "@earendil-works/pi-durable/codemode";
 import { McpClient, StdioTransport, toLlmContent, type Tool } from "@earendil-works/pi-mcp";
+import { arr, bool, obj, opt, unknown as unknownValue, unsafe } from "@earendil-works/pi-schema";
 
 type ServerConfig = {
   command: string;
@@ -23,11 +22,11 @@ type Server = {
   tools: ToolRegistration[];
 };
 
-const resultSchema = Type.Object({
-  content: Type.Array(Type.Unknown()),
-  structuredContent: Type.Optional(Type.Unknown()),
-  isError: Type.Optional(Type.Boolean()),
-}, { additionalProperties: true });
+const resultSchema = obj({
+  content: arr(unknownValue()),
+  structuredContent: opt(unknownValue()),
+  isError: opt(bool()),
+}, { open: true });
 
 function object(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -78,19 +77,22 @@ function hash(value: string): string {
 }
 
 /** Connect only user-configured stdio servers; register their tools for codemode discovery. */
-export async function openMcp(registry: Registry, onNamespaces: (namespaces: CodemodeNamespace[]) => void) {
+export async function openMcp(registry: Registry) {
   const servers = await readServers();
   let closed = false;
   let closing: Promise<void> | undefined;
 
   function publish(): void {
     if (closed) return;
-    registry.install(defineExtension({ name: "mcp", tools: servers.flatMap((server) => server.tools) }));
-    onNamespaces(servers.map((server) => ({
-      name: server.prefix.slice(0, -2), prefix: server.prefix,
-      description: server.client?.instructions?.split("\n")[0],
-      instructions: server.client?.instructions,
-    })));
+    // Keep the extension and tool names selected by existing conversations.
+    const instructions = servers.map((server) =>
+      `### ${server.prefix.slice(0, -2)}\n${server.client?.instructions ?? ""}`.trimEnd()
+    ).join("\n\n");
+    registry.install(defineExtension({
+      name: "mcp",
+      tools: servers.flatMap((server) => server.tools),
+      ...(servers.length && { namespace: { name: "mcp", description: "Tools from configured MCP servers.", instructions } }),
+    }));
   }
 
   async function refresh(server: Server, client: McpClient): Promise<void> {
@@ -106,7 +108,7 @@ export async function openMcp(registry: Registry, onNamespaces: (namespaces: Cod
       return defineTool({
         name,
         description: tool.description ?? tool.name,
-        parameters: Type.Unsafe<Record<string, unknown>>({
+        parameters: unsafe<Record<string, unknown>>({
           ...tool.inputSchema, type: "object", properties: tool.inputSchema.properties ?? {},
         }),
         structuredOutputSchema: resultSchema,
