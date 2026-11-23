@@ -4,7 +4,7 @@ import SwiftUI
 
 enum WorkspaceDialog {
     case new(String), folder(ConversationModel), rename(ConversationModel), archive(ConversationModel)
-    case conversations, archived(String?), models(ConversationModel), queue(ConversationModel), schedules
+    case conversations, archived(String?), models(ConversationModel), queue(ConversationModel), cron
     case editQueue(ConversationModel, QueuedInput), comment(ConversationModel, String), help(ConversationModel?)
 }
 
@@ -263,110 +263,94 @@ struct ModelDialog: View {
     }
 }
 
-struct SchedulesDialog: View {
+struct CronDialog: View {
     private let client: HarnessClient
     @Environment(\.dismiss) private var dismiss
-    @State private var schedules: [Anima_V1_ScheduleInfo] = []
+    @State private var crons: [Anima_V1_CronInfo] = []
     @State private var loaded = false
     @State private var loading = false
     @State private var loadID = UUID()
     @State private var busyID: String?
+    @State private var cronToDelete: Anima_V1_CronInfo?
     @State private var error: String?
 
     init(client: HarnessClient) { self.client = client }
 
     var body: some View {
-        DialogFrame(title: "Schedules",
-                    subtitle: "Review each proposal before approving it. Scheduled runs use their own job conversation.",
-                    width: 560) {
+        DialogFrame(title: "Cron Jobs", subtitle: "Background jobs run without opening a chat.", width: 560) {
             HStack {
-                SectionCaption("DURABLE JOBS")
+                SectionCaption("JOBS")
                 Spacer()
                 if loading { ProgressView().controlSize(.small) }
-                Button("Refresh", systemImage: "arrow.clockwise") { loadID = UUID() }
+                Button("Refresh", systemImage: "arrow.clockwise") { loading = true; loadID = UUID() }
                     .buttonStyle(TerminalButtonStyle()).disabled(loading || busyID != nil)
             }
             if let error { ErrorLine(message: error) }
             if !loaded {
-                HStack { ProgressView().controlSize(.small); Text("Loading schedules…").foregroundStyle(Terminal.muted) }
+                HStack { ProgressView().controlSize(.small); Text("Loading cron jobs…").foregroundStyle(Terminal.muted) }
                     .frame(maxWidth: .infinity, minHeight: 100)
-            } else if schedules.isEmpty {
-                Text(error == nil ? "No schedule proposals or jobs." : "Schedule list unavailable. Refresh to try again.")
+            } else if crons.isEmpty {
+                Text(error == nil ? "No cron jobs." : "Cron job list unavailable. Refresh to try again.")
                     .font(Terminal.font(Terminal.labelSize)).foregroundStyle(Terminal.muted)
                     .frame(maxWidth: .infinity, minHeight: 90, alignment: .center)
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 9) {
-                        scheduleSection("PENDING APPROVAL", statuses: [.pending])
-                        scheduleSection("ACTIVE", statuses: [.active])
-                        scheduleSection("OTHER", statuses: [.failed, .cancelled, .unspecified])
+                        ForEach(crons, id: \.cronID) { cron in cronCard(cron) }
                     }
                 }
                 .frame(height: 390)
             }
             TerminalRule()
             HStack {
-                if busyID != nil { Text("Updating schedule…").font(Terminal.font(Terminal.labelSize)).foregroundStyle(Terminal.muted) }
+                if busyID != nil { Text("Deleting cron job…").font(Terminal.font(Terminal.labelSize)).foregroundStyle(Terminal.muted) }
                 Spacer()
                 Button("Done") { dismiss() }.buttonStyle(TerminalButtonStyle()).keyboardShortcut(.cancelAction)
             }
         }
         .task(id: loadID) { await load() }
-    }
-
-    @ViewBuilder private func scheduleSection(_ title: String, statuses: [Anima_V1_ScheduleStatus]) -> some View {
-        let items = schedules.filter { statuses.contains($0.status) }
-        if !items.isEmpty {
-            SectionCaption(title).padding(.top, 3)
-            ForEach(items, id: \.scheduleID) { schedule in scheduleCard(schedule) }
+        .confirmationDialog("Delete cron job?", isPresented: Binding(
+            get: { cronToDelete != nil },
+            set: { if !$0 { cronToDelete = nil } }
+        ), titleVisibility: .visible, presenting: cronToDelete) { cron in
+            Button("Delete \(cleanText(cron.name))", role: .destructive) {
+                cronToDelete = nil
+                Task { await delete(cron.cronID) }
+            }
+            Button("Cancel", role: .cancel) { cronToDelete = nil }
+        } message: { _ in
+            Text("Future runs will stop. A run already in progress may finish.")
         }
     }
 
-    private func scheduleCard(_ schedule: Anima_V1_ScheduleInfo) -> some View {
+    private func cronCard(_ cron: Anima_V1_CronInfo) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(alignment: .firstTextBaseline) {
-                Text(cleanText(schedule.name)).font(Terminal.font(14)).foregroundStyle(Terminal.text)
+                Text(cleanText(cron.name)).font(Terminal.font(14)).foregroundStyle(Terminal.text)
                     .lineLimit(2).textSelection(.enabled)
                 Spacer(minLength: 8)
-                Text(statusLabel(schedule.status)).font(Terminal.font(Terminal.metaSize))
-                    .foregroundStyle(statusTint(schedule.status))
+                Button("Delete", systemImage: "trash") { cronToDelete = cron }
+                    .buttonStyle(TerminalButtonStyle(tint: Terminal.red)).disabled(loading || busyID != nil)
             }
             HStack(spacing: 6) {
-                Text(schedule.cron).foregroundStyle(Terminal.accent)
+                Text(cron.cron).foregroundStyle(Terminal.accent)
                 Text("·").foregroundStyle(Terminal.muted)
-                Text(cleanText(schedule.timezone)).foregroundStyle(Terminal.muted)
-                if schedule.hasNextRunAt {
+                Text(cleanText(cron.timezone)).foregroundStyle(Terminal.muted)
+                if cron.hasNextRunAt {
                     Text("·").foregroundStyle(Terminal.muted)
-                    Text("Next: \(formattedDate(schedule.nextRunAt, timezone: schedule.timezone))").foregroundStyle(Terminal.muted)
+                    Text("Next: \(formattedDate(cron.nextRunAt, timezone: cron.timezone))").foregroundStyle(Terminal.muted)
                 }
             }
             .font(Terminal.font(Terminal.labelSize)).textSelection(.enabled)
-            detailBlock("INSTRUCTION", cleanText(schedule.instruction))
-            VStack(alignment: .leading, spacing: 3) {
-                SectionCaption("ALLOWED MCP TOOLS")
-                if schedule.tools.isEmpty {
-                    Text("None").font(Terminal.font(Terminal.labelSize)).foregroundStyle(Terminal.muted)
-                } else {
-                    Text(schedule.tools.joined(separator: "\n"))
+            detailBlock("INSTRUCTION", cleanText(cron.instruction))
+            if !cron.tools.isEmpty {
+                VStack(alignment: .leading, spacing: 3) {
+                    SectionCaption("ALLOWED MCP TOOLS")
+                    Text(cron.tools.joined(separator: "\n"))
                         .font(Terminal.font(Terminal.labelSize)).foregroundStyle(Terminal.text).textSelection(.enabled)
                 }
             }
-            if schedule.hasError {
-                ErrorLine(message: cleanText(schedule.error))
-            }
-            if schedule.status == .pending || schedule.status == .active {
-                HStack(spacing: 7) {
-                    Spacer()
-                    if schedule.status == .pending {
-                        Button("Approve") { Task { await update(schedule, action: .approve) } }
-                            .buttonStyle(TerminalButtonStyle(primary: true)).disabled(busyID != nil)
-                    }
-                    Button("Cancel") {
-                        Task { await update(schedule, action: .cancel) }
-                    }
-                    .buttonStyle(TerminalButtonStyle(tint: Terminal.red)).disabled(busyID != nil)
-                }
-            }
+            if cron.hasError { ErrorLine(message: cleanText(cron.error)) }
         }
         .padding(10)
         .background(Terminal.surface, in: RoundedRectangle(cornerRadius: 5))
@@ -378,25 +362,6 @@ struct SchedulesDialog: View {
             SectionCaption(label)
             Text(text.isEmpty ? "(empty)" : text).font(Terminal.font(Terminal.labelSize))
                 .foregroundStyle(Terminal.text).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func statusLabel(_ status: Anima_V1_ScheduleStatus) -> String {
-        switch status {
-        case .pending: "PENDING APPROVAL"
-        case .active: "ACTIVE"
-        case .cancelled: "CANCELLED"
-        case .failed: "FAILED"
-        default: "UNKNOWN STATUS"
-        }
-    }
-
-    private func statusTint(_ status: Anima_V1_ScheduleStatus) -> Color {
-        switch status {
-        case .pending: Terminal.amber
-        case .active: Terminal.good
-        case .failed: Terminal.red
-        default: Terminal.muted
         }
     }
 
@@ -419,30 +384,22 @@ struct SchedulesDialog: View {
         error = nil
         defer { if !Task.isCancelled { loading = false; loaded = true } }
         do {
-            let result = try await client.rpc.listSchedules(request: .init()).value()
+            let result = try await client.rpc.listCrons(request: .init()).value()
             guard !Task.isCancelled else { return }
-            schedules = result.schedules
+            crons = result.crons
         } catch {
             if !Task.isCancelled { self.error = describe(error) }
         }
     }
 
-    private func update(_ schedule: Anima_V1_ScheduleInfo, action: Anima_V1_ScheduleAction) async {
-        guard busyID == nil else { return }
-        busyID = schedule.scheduleID
+    private func delete(_ cronID: String) async {
+        guard busyID == nil, !loading else { return }
+        busyID = cronID
         error = nil
         defer { busyID = nil }
         do {
-            let result = try await client.rpc.updateSchedule(request: .with {
-                $0.scheduleID = schedule.scheduleID
-                $0.action = action
-            }).value()
-            guard result.hasSchedule else { throw ClientIssue("Server returned no updated schedule.") }
-            if let index = schedules.firstIndex(where: { $0.scheduleID == schedule.scheduleID }) {
-                schedules[index] = result.schedule
-            } else {
-                schedules.append(result.schedule)
-            }
+            try await client.rpc.deleteCron(request: .with { $0.cronID = cronID }).value()
+            crons.removeAll { $0.cronID == cronID }
         } catch { self.error = describe(error) }
     }
 }

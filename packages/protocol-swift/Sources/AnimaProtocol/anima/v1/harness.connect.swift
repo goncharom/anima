@@ -52,10 +52,10 @@ public protocol Anima_V1_HarnessServiceClientInterface: Sendable {
     func `updateQueuedInput`(request: Anima_V1_UpdateQueuedInputRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_UpdateQueuedInputResponse>
 
     @available(iOS 13, *)
-    func `listSchedules`(request: Anima_V1_ListSchedulesRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_ListSchedulesResponse>
+    func `listCrons`(request: Anima_V1_ListCronsRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_ListCronsResponse>
 
     @available(iOS 13, *)
-    func `updateSchedule`(request: Anima_V1_UpdateScheduleRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_UpdateScheduleResponse>
+    func `deleteCron`(request: Anima_V1_DeleteCronRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_DeleteCronResponse>
 
     @available(iOS 13, *)
     func `getSubagentDefaults`(request: Anima_V1_GetSubagentDefaultsRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_GetSubagentDefaultsResponse>
@@ -138,13 +138,13 @@ public final class Anima_V1_HarnessServiceClient: Anima_V1_HarnessServiceClientI
     }
 
     @available(iOS 13, *)
-    public func `listSchedules`(request: Anima_V1_ListSchedulesRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Anima_V1_ListSchedulesResponse> {
-        return await self.client.unary(path: "/anima.v1.HarnessService/ListSchedules", idempotencyLevel: .unknown, request: request, headers: headers)
+    public func `listCrons`(request: Anima_V1_ListCronsRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Anima_V1_ListCronsResponse> {
+        return await self.client.unary(path: "/anima.v1.HarnessService/ListCrons", idempotencyLevel: .unknown, request: request, headers: headers)
     }
 
     @available(iOS 13, *)
-    public func `updateSchedule`(request: Anima_V1_UpdateScheduleRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Anima_V1_UpdateScheduleResponse> {
-        return await self.client.unary(path: "/anima.v1.HarnessService/UpdateSchedule", idempotencyLevel: .unknown, request: request, headers: headers)
+    public func `deleteCron`(request: Anima_V1_DeleteCronRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Anima_V1_DeleteCronResponse> {
+        return await self.client.unary(path: "/anima.v1.HarnessService/DeleteCron", idempotencyLevel: .unknown, request: request, headers: headers)
     }
 
     @available(iOS 13, *)
@@ -172,8 +172,8 @@ public final class Anima_V1_HarnessServiceClient: Anima_V1_HarnessServiceClientI
             public static let listDirectories = Connect.MethodSpec(name: "ListDirectories", service: "anima.v1.HarnessService", type: .unary)
             public static let listModels = Connect.MethodSpec(name: "ListModels", service: "anima.v1.HarnessService", type: .unary)
             public static let updateQueuedInput = Connect.MethodSpec(name: "UpdateQueuedInput", service: "anima.v1.HarnessService", type: .unary)
-            public static let listSchedules = Connect.MethodSpec(name: "ListSchedules", service: "anima.v1.HarnessService", type: .unary)
-            public static let updateSchedule = Connect.MethodSpec(name: "UpdateSchedule", service: "anima.v1.HarnessService", type: .unary)
+            public static let listCrons = Connect.MethodSpec(name: "ListCrons", service: "anima.v1.HarnessService", type: .unary)
+            public static let deleteCron = Connect.MethodSpec(name: "DeleteCron", service: "anima.v1.HarnessService", type: .unary)
             public static let getSubagentDefaults = Connect.MethodSpec(name: "GetSubagentDefaults", service: "anima.v1.HarnessService", type: .unary)
             public static let updateSubagentDefaults = Connect.MethodSpec(name: "UpdateSubagentDefaults", service: "anima.v1.HarnessService", type: .unary)
         }

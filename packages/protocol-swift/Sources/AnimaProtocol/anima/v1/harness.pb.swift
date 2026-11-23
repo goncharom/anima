@@ -65,90 +65,6 @@ public nonisolated enum Anima_V1_BusyBehavior: SwiftProtobuf.Enum, Swift.CaseIte
 
 }
 
-public nonisolated enum Anima_V1_ScheduleStatus: SwiftProtobuf.Enum, Swift.CaseIterable {
-  public typealias RawValue = Int
-  case unspecified // = 0
-  case pending // = 1
-  case active // = 2
-  case cancelled // = 3
-  case failed // = 4
-  case UNRECOGNIZED(Int)
-
-  public init() {
-    self = .unspecified
-  }
-
-  public init?(rawValue: Int) {
-    switch rawValue {
-    case 0: self = .unspecified
-    case 1: self = .pending
-    case 2: self = .active
-    case 3: self = .cancelled
-    case 4: self = .failed
-    default: self = .UNRECOGNIZED(rawValue)
-    }
-  }
-
-  public var rawValue: Int {
-    switch self {
-    case .unspecified: return 0
-    case .pending: return 1
-    case .active: return 2
-    case .cancelled: return 3
-    case .failed: return 4
-    case .UNRECOGNIZED(let i): return i
-    }
-  }
-
-  // The compiler won't synthesize support with the UNRECOGNIZED case.
-  public static let allCases: [Anima_V1_ScheduleStatus] = [
-    .unspecified,
-    .pending,
-    .active,
-    .cancelled,
-    .failed,
-  ]
-
-}
-
-public nonisolated enum Anima_V1_ScheduleAction: SwiftProtobuf.Enum, Swift.CaseIterable {
-  public typealias RawValue = Int
-  case unspecified // = 0
-  case approve // = 1
-  case cancel // = 2
-  case UNRECOGNIZED(Int)
-
-  public init() {
-    self = .unspecified
-  }
-
-  public init?(rawValue: Int) {
-    switch rawValue {
-    case 0: self = .unspecified
-    case 1: self = .approve
-    case 2: self = .cancel
-    default: self = .UNRECOGNIZED(rawValue)
-    }
-  }
-
-  public var rawValue: Int {
-    switch self {
-    case .unspecified: return 0
-    case .approve: return 1
-    case .cancel: return 2
-    case .UNRECOGNIZED(let i): return i
-    }
-  }
-
-  // The compiler won't synthesize support with the UNRECOGNIZED case.
-  public static let allCases: [Anima_V1_ScheduleAction] = [
-    .unspecified,
-    .approve,
-    .cancel,
-  ]
-
-}
-
 /// IDs are opaque strings, scoped to the server's database. They remain valid
 /// across restarts using the same database; resetting it invalidates existing IDs.
 public nonisolated struct Anima_V1_CreateConversationRequest: Sendable {
@@ -890,12 +806,12 @@ public nonisolated struct Anima_V1_UpdateQueuedInputResponse: Sendable {
   public init() {}
 }
 
-public nonisolated struct Anima_V1_ScheduleInfo: Sendable {
+public nonisolated struct Anima_V1_CronInfo: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  public var scheduleID: String = String()
+  public var cronID: String = String()
 
   public var name: String = String()
 
@@ -908,21 +824,7 @@ public nonisolated struct Anima_V1_ScheduleInfo: Sendable {
 
   public var tools: [String] = []
 
-  public var status: Anima_V1_ScheduleStatus = .unspecified
-
-  public var sourceConversationID: String = String()
-
-  /// Separate runner conversation; absent until approved.
-  public var conversationID: String {
-    get {_conversationID ?? String()}
-    set {_conversationID = newValue}
-  }
-  /// Returns true if `conversationID` has been explicitly set.
-  public var hasConversationID: Bool {self._conversationID != nil}
-  /// Clears the value of `conversationID`. Subsequent reads from it will return its default value.
-  public mutating func clearConversationID() {self._conversationID = nil}
-
-  /// Absolute time in ISO 8601 format.
+  /// Absolute time in ISO 8601 format; absent if scheduling failed.
   public var nextRunAt: String {
     get {_nextRunAt ?? String()}
     set {_nextRunAt = newValue}
@@ -945,12 +847,11 @@ public nonisolated struct Anima_V1_ScheduleInfo: Sendable {
 
   public init() {}
 
-  fileprivate var _conversationID: String? = nil
   fileprivate var _nextRunAt: String? = nil
   fileprivate var _error: String? = nil
 }
 
-public nonisolated struct Anima_V1_ListSchedulesRequest: Sendable {
+public nonisolated struct Anima_V1_ListCronsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -960,51 +861,39 @@ public nonisolated struct Anima_V1_ListSchedulesRequest: Sendable {
   public init() {}
 }
 
-public nonisolated struct Anima_V1_ListSchedulesResponse: Sendable {
+public nonisolated struct Anima_V1_ListCronsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  public var schedules: [Anima_V1_ScheduleInfo] = []
+  public var crons: [Anima_V1_CronInfo] = []
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 }
 
-public nonisolated struct Anima_V1_UpdateScheduleRequest: Sendable {
+public nonisolated struct Anima_V1_DeleteCronRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  public var scheduleID: String = String()
-
-  public var action: Anima_V1_ScheduleAction = .unspecified
+  public var cronID: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 }
 
-public nonisolated struct Anima_V1_UpdateScheduleResponse: Sendable {
+/// Stops future runs. An in-progress run may finish.
+public nonisolated struct Anima_V1_DeleteCronResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  public var schedule: Anima_V1_ScheduleInfo {
-    get {_schedule ?? Anima_V1_ScheduleInfo()}
-    set {_schedule = newValue}
-  }
-  /// Returns true if `schedule` has been explicitly set.
-  public var hasSchedule: Bool {self._schedule != nil}
-  /// Clears the value of `schedule`. Subsequent reads from it will return its default value.
-  public mutating func clearSchedule() {self._schedule = nil}
-
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
-
-  fileprivate var _schedule: Anima_V1_ScheduleInfo? = nil
 }
 
 public nonisolated struct Anima_V1_SubagentDefaults: Sendable {
@@ -1111,14 +1000,6 @@ fileprivate nonisolated let _protobuf_package = "anima.v1"
 
 nonisolated extension Anima_V1_BusyBehavior: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0BUSY_BEHAVIOR_UNSPECIFIED\0\u{1}BUSY_BEHAVIOR_QUEUE\0\u{1}BUSY_BEHAVIOR_STEER\0\u{1}BUSY_BEHAVIOR_REJECT\0")
-}
-
-nonisolated extension Anima_V1_ScheduleStatus: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SCHEDULE_STATUS_UNSPECIFIED\0\u{1}SCHEDULE_STATUS_PENDING\0\u{1}SCHEDULE_STATUS_ACTIVE\0\u{1}SCHEDULE_STATUS_CANCELLED\0\u{1}SCHEDULE_STATUS_FAILED\0")
-}
-
-nonisolated extension Anima_V1_ScheduleAction: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SCHEDULE_ACTION_UNSPECIFIED\0\u{1}SCHEDULE_ACTION_APPROVE\0\u{1}SCHEDULE_ACTION_CANCEL\0")
 }
 
 nonisolated extension Anima_V1_CreateConversationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
@@ -2310,9 +2191,9 @@ nonisolated extension Anima_V1_UpdateQueuedInputResponse: SwiftProtobuf.Message,
   }
 }
 
-nonisolated extension Anima_V1_ScheduleInfo: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ScheduleInfo"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}schedule_id\0\u{1}name\0\u{1}cron\0\u{1}timezone\0\u{1}instruction\0\u{1}tools\0\u{1}status\0\u{3}source_conversation_id\0\u{3}conversation_id\0\u{3}next_run_at\0\u{1}error\0")
+nonisolated extension Anima_V1_CronInfo: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CronInfo"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}cron_id\0\u{1}name\0\u{1}cron\0\u{1}timezone\0\u{1}instruction\0\u{1}tools\0\u{3}next_run_at\0\u{1}error\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2320,17 +2201,14 @@ nonisolated extension Anima_V1_ScheduleInfo: SwiftProtobuf.Message, SwiftProtobu
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.scheduleID) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.cronID) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.name) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.cron) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.timezone) }()
       case 5: try { try decoder.decodeSingularStringField(value: &self.instruction) }()
       case 6: try { try decoder.decodeRepeatedStringField(value: &self.tools) }()
-      case 7: try { try decoder.decodeSingularEnumField(value: &self.status) }()
-      case 8: try { try decoder.decodeSingularStringField(value: &self.sourceConversationID) }()
-      case 9: try { try decoder.decodeSingularStringField(value: &self._conversationID) }()
-      case 10: try { try decoder.decodeSingularStringField(value: &self._nextRunAt) }()
-      case 11: try { try decoder.decodeSingularStringField(value: &self._error) }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self._nextRunAt) }()
+      case 8: try { try decoder.decodeSingularStringField(value: &self._error) }()
       default: break
       }
     }
@@ -2341,8 +2219,8 @@ nonisolated extension Anima_V1_ScheduleInfo: SwiftProtobuf.Message, SwiftProtobu
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.scheduleID.isEmpty {
-      try visitor.visitSingularStringField(value: self.scheduleID, fieldNumber: 1)
+    if !self.cronID.isEmpty {
+      try visitor.visitSingularStringField(value: self.cronID, fieldNumber: 1)
     }
     if !self.name.isEmpty {
       try visitor.visitSingularStringField(value: self.name, fieldNumber: 2)
@@ -2359,34 +2237,22 @@ nonisolated extension Anima_V1_ScheduleInfo: SwiftProtobuf.Message, SwiftProtobu
     if !self.tools.isEmpty {
       try visitor.visitRepeatedStringField(value: self.tools, fieldNumber: 6)
     }
-    if self.status != .unspecified {
-      try visitor.visitSingularEnumField(value: self.status, fieldNumber: 7)
-    }
-    if !self.sourceConversationID.isEmpty {
-      try visitor.visitSingularStringField(value: self.sourceConversationID, fieldNumber: 8)
-    }
-    try { if let v = self._conversationID {
-      try visitor.visitSingularStringField(value: v, fieldNumber: 9)
-    } }()
     try { if let v = self._nextRunAt {
-      try visitor.visitSingularStringField(value: v, fieldNumber: 10)
+      try visitor.visitSingularStringField(value: v, fieldNumber: 7)
     } }()
     try { if let v = self._error {
-      try visitor.visitSingularStringField(value: v, fieldNumber: 11)
+      try visitor.visitSingularStringField(value: v, fieldNumber: 8)
     } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Anima_V1_ScheduleInfo, rhs: Anima_V1_ScheduleInfo) -> Bool {
-    if lhs.scheduleID != rhs.scheduleID {return false}
+  public static func ==(lhs: Anima_V1_CronInfo, rhs: Anima_V1_CronInfo) -> Bool {
+    if lhs.cronID != rhs.cronID {return false}
     if lhs.name != rhs.name {return false}
     if lhs.cron != rhs.cron {return false}
     if lhs.timezone != rhs.timezone {return false}
     if lhs.instruction != rhs.instruction {return false}
     if lhs.tools != rhs.tools {return false}
-    if lhs.status != rhs.status {return false}
-    if lhs.sourceConversationID != rhs.sourceConversationID {return false}
-    if lhs._conversationID != rhs._conversationID {return false}
     if lhs._nextRunAt != rhs._nextRunAt {return false}
     if lhs._error != rhs._error {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -2394,8 +2260,8 @@ nonisolated extension Anima_V1_ScheduleInfo: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-nonisolated extension Anima_V1_ListSchedulesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ListSchedulesRequest"
+nonisolated extension Anima_V1_ListCronsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ListCronsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -2407,15 +2273,15 @@ nonisolated extension Anima_V1_ListSchedulesRequest: SwiftProtobuf.Message, Swif
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Anima_V1_ListSchedulesRequest, rhs: Anima_V1_ListSchedulesRequest) -> Bool {
+  public static func ==(lhs: Anima_V1_ListCronsRequest, rhs: Anima_V1_ListCronsRequest) -> Bool {
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-nonisolated extension Anima_V1_ListSchedulesResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ListSchedulesResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}schedules\0")
+nonisolated extension Anima_V1_ListCronsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ListCronsResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}crons\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2423,29 +2289,29 @@ nonisolated extension Anima_V1_ListSchedulesResponse: SwiftProtobuf.Message, Swi
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.schedules) }()
+      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.crons) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.schedules.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.schedules, fieldNumber: 1)
+    if !self.crons.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.crons, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Anima_V1_ListSchedulesResponse, rhs: Anima_V1_ListSchedulesResponse) -> Bool {
-    if lhs.schedules != rhs.schedules {return false}
+  public static func ==(lhs: Anima_V1_ListCronsResponse, rhs: Anima_V1_ListCronsResponse) -> Bool {
+    if lhs.crons != rhs.crons {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-nonisolated extension Anima_V1_UpdateScheduleRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".UpdateScheduleRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}schedule_id\0\u{1}action\0")
+nonisolated extension Anima_V1_DeleteCronRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".DeleteCronRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}cron_id\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2453,60 +2319,40 @@ nonisolated extension Anima_V1_UpdateScheduleRequest: SwiftProtobuf.Message, Swi
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.scheduleID) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.action) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.cronID) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.scheduleID.isEmpty {
-      try visitor.visitSingularStringField(value: self.scheduleID, fieldNumber: 1)
-    }
-    if self.action != .unspecified {
-      try visitor.visitSingularEnumField(value: self.action, fieldNumber: 2)
+    if !self.cronID.isEmpty {
+      try visitor.visitSingularStringField(value: self.cronID, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Anima_V1_UpdateScheduleRequest, rhs: Anima_V1_UpdateScheduleRequest) -> Bool {
-    if lhs.scheduleID != rhs.scheduleID {return false}
-    if lhs.action != rhs.action {return false}
+  public static func ==(lhs: Anima_V1_DeleteCronRequest, rhs: Anima_V1_DeleteCronRequest) -> Bool {
+    if lhs.cronID != rhs.cronID {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-nonisolated extension Anima_V1_UpdateScheduleResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".UpdateScheduleResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}schedule\0")
+nonisolated extension Anima_V1_DeleteCronResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".DeleteCronResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._schedule) }()
-      default: break
-      }
-    }
+    // Load everything into unknown fields
+    while try decoder.nextFieldNumber() != nil {}
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._schedule {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Anima_V1_UpdateScheduleResponse, rhs: Anima_V1_UpdateScheduleResponse) -> Bool {
-    if lhs._schedule != rhs._schedule {return false}
+  public static func ==(lhs: Anima_V1_DeleteCronResponse, rhs: Anima_V1_DeleteCronResponse) -> Bool {
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

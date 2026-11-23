@@ -15,7 +15,7 @@ import { CodingTools } from "@earendil-works/pi-durable/tools";
 import { ConversationReporter, createReporter } from "./conversation-reporter.ts";
 import { ConversationsDoc, displayName, displayTaskTitle, registerConversation } from "./conversations.ts";
 import { COORDINATOR_PROMPT, workerPrompt } from "../prompts.ts";
-import { ScheduleTools, ScheduledJobs } from "./schedules.ts";
+import { createCron, CronJob } from "./crons.ts";
 import { subagentDefaults } from "./subagent-defaults.ts";
 
 /** Extension references select by name; each harness installs its own codemode sandbox. */
@@ -156,7 +156,7 @@ const sendMessage = defineTool({
 });
 
 /** Delegation tools available alongside the coordinator's coding tools. */
-export const CoordinatorTools = [subagent, sendMessage, ...ScheduleTools];
+export const CoordinatorTools = [subagent, sendMessage, createCron];
 
 export function coordinatorCapabilities(instructions?: string): AgentChange {
   return {
@@ -168,6 +168,6 @@ export function coordinatorCapabilities(instructions?: string): AgentChange {
 /** Launch non-recursive background children and automatically report their answers. */
 export const BackgroundSubagents: Extension = defineExtension({
   name: "background-subagents",
-  tasks: [Anchor, ConversationReporter, ...ScheduledJobs],
+  tasks: [Anchor, ConversationReporter, CronJob],
   tools: CoordinatorTools,
 });

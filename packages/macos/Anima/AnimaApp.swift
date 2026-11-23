@@ -181,7 +181,7 @@ private struct ServerSettings: View {
 }
 
 enum AnimaCommand: String, CaseIterable, Identifiable {
-    case new, conversations, rename, archive, archived, cwd, model, queue, compact, schedules, sidebar, agents, resize, help, quit, server
+    case new, conversations, rename, archive, archived, cwd, model, queue, compact, cron, sidebar, agents, resize, help, quit, server
 
     var id: String { rawValue }
     var slash: String { "/\(rawValue)" }
@@ -197,7 +197,7 @@ enum AnimaCommand: String, CaseIterable, Identifiable {
         case .model: "Choose the chat model (⌃L)"
         case .queue: "Edit or withdraw queued inputs"
         case .compact: "Summarize older context: /compact [instructions]"
-        case .schedules: "Review, approve, or cancel durable scheduled jobs"
+        case .cron: "List or delete background cron jobs"
         case .sidebar: "Toggle conversations (F2)"
         case .agents: "Toggle subagents (F3)"
         case .resize: "Resize a panel: /resize left|right columns"
@@ -237,7 +237,7 @@ private struct WorkspaceCommands: Commands {
             Divider()
             Button("Switch Conversation…") { workspace?.handle(.command(.conversations)) }
                 .keyboardShortcut("k").disabled(workspace?.connected != true)
-            Button("Schedules…") { workspace?.handle(.command(.schedules)) }
+            Button("Cron Jobs…") { workspace?.handle(.command(.cron)) }
                 .disabled(workspace?.connected != true)
             Button("Toggle Conversations") { workspace?.handle(.command(.sidebar)) }
                 .keyboardShortcut(functionKey(2), modifiers: []).disabled(workspace == nil)

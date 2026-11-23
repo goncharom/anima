@@ -36,7 +36,7 @@ import { ProjectCodingTools } from "./extensions/project-resources.ts";
 import { BackgroundSubagents, coordinatorCapabilities, SubagentsDoc } from "./extensions/subagents.ts";
 import { createReporter, InputRequests } from "./extensions/conversation-reporter.ts";
 import { openMcp } from "./extensions/mcp.ts";
-import { listSchedules, updateSchedule } from "./extensions/schedules.ts";
+import { deleteCron, listCrons } from "./extensions/crons.ts";
 import { subagentDefaults, updateSubagentDefaults } from "./extensions/subagent-defaults.ts";
 import {
   abortConversation, conversationStatus, ConversationsDoc, directoryPath,
@@ -260,7 +260,7 @@ export async function startServer(harness?: Harness, options: { port?: number; m
           const watch = await runtime.watchDoc(ConversationsDoc, context);
           if (!watch) throw new ConnectError("Conversation directory is unavailable", Code.FailedPrecondition);
           for await (const { value: directory, retired } of watchValues(watch)) {
-            if (!retired) yield { conversations: Object.values(directory.conversations) };
+            if (!retired) yield { conversations: Object.values(directory.conversations).filter(info => info.kind !== "cron") };
           }
         },
         async updateConversation(request, rpc) {
@@ -295,14 +295,14 @@ export async function startServer(harness?: Harness, options: { port?: number; m
           const conversation = await requireConversation(runtime, request.conversationId, context);
           return updateQueuedInput(conversation, request, context);
         },
-        async listSchedules(_request, rpc) {
+        async listCrons(_request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
-          return { schedules: await listSchedules(runtime, context) };
+          return { crons: await listCrons(runtime, context) };
         },
-        async updateSchedule(request, rpc) {
+        async deleteCron(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
-          const schedule = await updateSchedule(runtime, request.scheduleId, request.action, models, context);
-          return { schedule };
+          await deleteCron(runtime, request.cronId, context);
+          return {};
         },
         async getEntries(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
@@ -324,7 +324,7 @@ export async function startServer(harness?: Harness, options: { port?: number; m
   }));
 
   try {
-    // Initialize the directory without creating any conversation, even on an empty database.
+    // The conversation directory must be watchable even before the first conversation is created.
     await runtime.commit(async tx => { await tx.doc(ConversationsDoc); }, BACKGROUND_CONTEXT);
     await new Promise<void>((resolve, reject) => {
       server.once("error", reject);
@@ -378,7 +378,13 @@ function parseId<T extends number>(value: string): T {
 }
 
 async function requireConversation(harness: Harness, id: string, context: Context) {
-  const conversation = await harness.conversation(parseId<ConversationId>(id), context);
+  const conversationId = parseId<ConversationId>(id);
+  const isCron = await harness.commit(async tx => {
+    const info = (await tx.doc(ConversationsDoc)).conversations[String(conversationId)];
+    return info?.kind === "cron";
+  }, context);
+  if (isCron) throw new ConnectError("Conversation not found", Code.NotFound);
+  const conversation = await harness.conversation(conversationId, context);
   if (conversation === undefined) throw new ConnectError("Conversation not found", Code.NotFound);
   return conversation;
 }

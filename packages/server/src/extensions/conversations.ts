@@ -22,6 +22,8 @@ export type ConversationInfo = {
   archived: boolean;
   ownerConversationId?: string;
   taskTitle?: string;
+  /** Internal ownerless runtime, excluded from the public conversation API. */
+  kind?: "cron";
 };
 
 /** Display metadata and the spawning conversation, never a second copy of runtime state. */

@@ -175,15 +175,15 @@ export class Dialogs {
       return new Pane(title, input, () => done());
     });
   }
-  review(title: string, detail: string, actions: { key: "a" | "c" | "o"; label: string }[]) {
-    return this.show<string>(done => {
+  reviewCron(detail: string) {
+    return this.show<"back" | "delete">(done => {
       const input = new Container();
       const text = new Text(clean(detail), 0, 0);
       let offset = 0, maxOffset = 0, pageSize = 1;
       input.addChild({
         render: width => {
           const lines = text.render(width);
-          pageSize = Math.max(1, Math.floor(this.ui.terminal.rows * 0.9) - actions.length - 5);
+          pageSize = Math.max(1, Math.floor(this.ui.terminal.rows * 0.9) - 6);
           maxOffset = Math.max(0, lines.length - pageSize);
           offset = Math.min(maxOffset, offset);
           return lines.slice(offset, offset + pageSize);
@@ -191,7 +191,7 @@ export class Dialogs {
         invalidate: () => text.invalidate(),
       });
       input.addChild(line(() => colors.muted(maxOffset > 0 ? "↑/↓ or PgUp/PgDn to scroll · Esc to go back" : "Esc to go back")));
-      for (const { key, label } of actions) input.addChild(button(`${key.toUpperCase()}  ${label}`, () => done(key)));
+      input.addChild(button(() => colors.error("D  Delete job…"), () => done("delete")));
       const handleInput = (data: string) => {
         if (isKeyRelease(data)) return;
         const scroll = matchesKey(data, "down") ? 1 : matchesKey(data, "up") ? -1
@@ -199,12 +199,9 @@ export class Dialogs {
         if (scroll) {
           offset = Math.min(maxOffset, Math.max(0, offset + scroll));
           this.ui.requestRender();
-        } else if (!isKeyRepeat(data)) {
-          const action = actions.find(({ key }) => matchesKey(data, key));
-          if (action) done(action.key);
-        }
+        } else if (!isKeyRepeat(data) && matchesKey(data, "d")) done("delete");
       };
-      return new Pane(title, Object.assign(input, { handleInput }), () => done());
+      return new Pane("Cron job", Object.assign(input, { handleInput }), () => done("back"));
     });
   }
   async wait<T>(title: string, operation: (signal: AbortSignal) => Promise<T>): Promise<T | undefined> {

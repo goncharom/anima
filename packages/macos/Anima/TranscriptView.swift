@@ -166,12 +166,11 @@ struct TranscriptView: View {
         case .image(let image): TranscriptImage(payload: image)
         case .text(let style, let text):
             switch style {
-            case .user, .scheduled, .delegated:
+            case .user, .delegated:
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline, spacing: 5) {
                         Text(style == .delegated ? "↳" : "❯").font(Terminal.font(Terminal.metaSize)).foregroundStyle(Terminal.accent)
-                        SectionCaption(style == .scheduled ? "SCHEDULED PROMPT" :
-                                         (style == .delegated ? "DELEGATED INSTRUCTION" : "YOU"))
+                        SectionCaption(style == .delegated ? "DELEGATED INSTRUCTION" : "YOU")
                     }
                     if style == .delegated {
                         MarkdownBody(text: text)
@@ -305,7 +304,6 @@ struct TranscriptView: View {
                 ?? (chat.followsLatest ? visible.count : -1)
             let indices = visible.indices.filter {
                 if case .text(.user, _) = visible[$0].content { return true }
-                if case .text(.scheduled, _) = visible[$0].content { return true }
                 if case .text(.delegated, _) = visible[$0].content { return true }
                 return false
             }
