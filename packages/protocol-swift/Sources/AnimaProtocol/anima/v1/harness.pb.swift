@@ -822,8 +822,6 @@ public nonisolated struct Anima_V1_CronInfo: Sendable {
 
   public var instruction: String = String()
 
-  public var tools: [String] = []
-
   /// Absolute time in ISO 8601 format; absent if scheduling failed.
   public var nextRunAt: String {
     get {_nextRunAt ?? String()}
@@ -2193,7 +2191,7 @@ nonisolated extension Anima_V1_UpdateQueuedInputResponse: SwiftProtobuf.Message,
 
 nonisolated extension Anima_V1_CronInfo: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CronInfo"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}cron_id\0\u{1}name\0\u{1}cron\0\u{1}timezone\0\u{1}instruction\0\u{1}tools\0\u{3}next_run_at\0\u{1}error\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}cron_id\0\u{1}name\0\u{1}cron\0\u{1}timezone\0\u{1}instruction\0\u{4}\u{2}next_run_at\0\u{1}error\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2206,7 +2204,6 @@ nonisolated extension Anima_V1_CronInfo: SwiftProtobuf.Message, SwiftProtobuf._M
       case 3: try { try decoder.decodeSingularStringField(value: &self.cron) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.timezone) }()
       case 5: try { try decoder.decodeSingularStringField(value: &self.instruction) }()
-      case 6: try { try decoder.decodeRepeatedStringField(value: &self.tools) }()
       case 7: try { try decoder.decodeSingularStringField(value: &self._nextRunAt) }()
       case 8: try { try decoder.decodeSingularStringField(value: &self._error) }()
       default: break
@@ -2234,9 +2231,6 @@ nonisolated extension Anima_V1_CronInfo: SwiftProtobuf.Message, SwiftProtobuf._M
     if !self.instruction.isEmpty {
       try visitor.visitSingularStringField(value: self.instruction, fieldNumber: 5)
     }
-    if !self.tools.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.tools, fieldNumber: 6)
-    }
     try { if let v = self._nextRunAt {
       try visitor.visitSingularStringField(value: v, fieldNumber: 7)
     } }()
@@ -2252,7 +2246,6 @@ nonisolated extension Anima_V1_CronInfo: SwiftProtobuf.Message, SwiftProtobuf._M
     if lhs.cron != rhs.cron {return false}
     if lhs.timezone != rhs.timezone {return false}
     if lhs.instruction != rhs.instruction {return false}
-    if lhs.tools != rhs.tools {return false}
     if lhs._nextRunAt != rhs._nextRunAt {return false}
     if lhs._error != rhs._error {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}

@@ -282,7 +282,6 @@ export class App {
         ...(job.nextRunAt ? [`Next run (UTC): ${job.nextRunAt}`] : []),
         ...(job.error ? [`Error: ${job.error}`] : []),
         "", "Prompt:", job.instruction,
-        ...(job.tools.length ? ["", "Allowed MCP tools:", ...job.tools] : []),
       ].join("\n");
       const action = await dialogs.reviewCron(detail);
       if (!action) return;

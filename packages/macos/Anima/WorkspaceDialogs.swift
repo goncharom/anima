@@ -343,13 +343,6 @@ struct CronDialog: View {
             }
             .font(Terminal.font(Terminal.labelSize)).textSelection(.enabled)
             detailBlock("INSTRUCTION", cleanText(cron.instruction))
-            if !cron.tools.isEmpty {
-                VStack(alignment: .leading, spacing: 3) {
-                    SectionCaption("ALLOWED MCP TOOLS")
-                    Text(cron.tools.joined(separator: "\n"))
-                        .font(Terminal.font(Terminal.labelSize)).foregroundStyle(Terminal.text).textSelection(.enabled)
-                }
-            }
             if cron.hasError { ErrorLine(message: cleanText(cron.error)) }
         }
         .padding(10)

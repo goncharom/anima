@@ -256,7 +256,6 @@ message CronInfo {
   string cron = 3;
   string timezone = 4;
   string instruction = 5;
-  repeated string tools = 6;
   // Absolute time in ISO 8601 format; absent if scheduling failed.
   optional string next_run_at = 7;
   optional string error = 8;
