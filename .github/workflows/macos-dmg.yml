@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      - 'app/macos/**'
+      - 'packages/macos/**'
       - 'packages/protocol-swift/**'
       - '.github/workflows/macos-dmg.yml'
 
@@ -16,9 +16,6 @@ jobs:
   build:
     runs-on: macos-26
     timeout-minutes: 30
-    env:
-      BUILD_DIR: ${{ runner.temp }}/anima-build
-      DMG_ROOT: ${{ runner.temp }}/anima-dmg
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -31,11 +28,11 @@ jobs:
       - name: Build universal macOS app
         run: |
           xcodebuild \
-            -project app/macos/Anima.xcodeproj \
+            -project packages/macos/Anima.xcodeproj \
             -scheme Anima \
             -configuration Release \
             -destination 'generic/platform=macOS' \
-            -derivedDataPath "$BUILD_DIR" \
+            -derivedDataPath "$RUNNER_TEMP/anima-build" \
             ARCHS='arm64 x86_64' \
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_IDENTITY=- \
@@ -44,9 +41,12 @@ jobs:
 
       - name: Create DMG
         run: |
-          APP="$BUILD_DIR/Build/Products/Release/Anima.app"
+          APP="$RUNNER_TEMP/anima-build/Build/Products/Release/Anima.app"
+          DMG_ROOT="$RUNNER_TEMP/anima-dmg"
           codesign --verify --deep --strict --verbose=2 "$APP"
-          lipo -verify_arch arm64 x86_64 "$APP/Contents/MacOS/Anima"
+          for arch in arm64 x86_64; do
+            lipo "$APP/Contents/MacOS/Anima" -verify_arch "$arch"
+          done
           mkdir -p "$DMG_ROOT" dist
           ditto "$APP" "$DMG_ROOT/Anima.app"
           ln -s /Applications "$DMG_ROOT/Applications"

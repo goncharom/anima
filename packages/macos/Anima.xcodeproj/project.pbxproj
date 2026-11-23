@@ -169,7 +169,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		A1100000000000000000001F /* AnimaProtocol */ = { isa = XCLocalSwiftPackageReference; relativePath = "../../packages/protocol-swift"; };
+		A1100000000000000000001F /* AnimaProtocol */ = { isa = XCLocalSwiftPackageReference; relativePath = "../protocol-swift"; };
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */

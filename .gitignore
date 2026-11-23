@@ -3,4 +3,4 @@ node_modules/
 /.anima/
 /packages/protocol-swift/.build/
 /packages/protocol-swift/.swiftpm/
-/app/macos/**/xcuserdata/
+/packages/macos/**/xcuserdata/

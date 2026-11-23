@@ -20,7 +20,7 @@ Then connect the app to `127.0.0.1:4242` with HTTPS off. For a directly reachabl
 
 The **Build macOS DMG** workflow (`.github/workflows/macos-dmg.yml`) builds a Release app for both Apple Silicon and Intel using the macOS 26 runner's Xcode toolchain, then packages it into a compressed DMG with an Applications shortcut. The app still requires macOS 15 or later.
 
-- **Automatic build:** push to `master` with changes under `app/macos/`, `packages/protocol-swift/`, or to `.github/workflows/macos-dmg.yml`. Other branches and tag pushes do not trigger builds.
+- **Automatic build:** push to `master` with changes under `packages/macos/`, `packages/protocol-swift/`, or to `.github/workflows/macos-dmg.yml`. Other branches and tag pushes do not trigger builds.
 - **Download:** open the completed workflow run and download the **Anima-macos-universal** artifact. Unzip it to get `Anima-macos-universal.dmg`, open the DMG, and drag Anima into Applications. Artifacts are retained for 30 days; the workflow does not create a GitHub Release.
 
 No Apple credentials are required: the app is ad-hoc signed, **not Developer ID signed or notarized**. Gatekeeper may block downloaded builds on other Macs; this workflow is intended for development/internal distribution. Public distribution without those warnings requires an Apple Developer ID certificate and Apple's notarization service. The DMG contains only the client; run the server separately as described above.
