@@ -59,7 +59,9 @@ struct PromptEditor: NSViewRepresentable {
         editor.onFocus = onFocus
         if editor.string != text, !editor.hasMarkedText() {
             editor.string = text
-            editor.setSelectedRange(NSRange(location: (text as NSString).length, length: 0))
+            let end = NSRange(location: (text as NSString).length, length: 0)
+            editor.setSelectedRange(end)
+            editor.scrollRangeToVisible(end)
         }
         if let focus, coordinator.lastFocus != focus {
             coordinator.lastFocus = focus

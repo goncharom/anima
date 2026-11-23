@@ -50,9 +50,8 @@ enum Terminal {
 
 extension View {
     func chatColumn(worker: Bool) -> some View {
-        frame(maxWidth: 822, alignment: .leading)
-            .padding(.horizontal, worker ? Terminal.paneInset : 18)
-            .frame(maxWidth: .infinity)
+        padding(.horizontal, worker ? Terminal.paneInset : 18)
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
     }
 }
 

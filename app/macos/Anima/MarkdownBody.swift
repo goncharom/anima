@@ -3,9 +3,10 @@ import SwiftUI
 
 struct MarkdownBody: View {
     let text: String
+    var onComment: ((String) -> Void)? = nil
 
     var body: some View {
-        TranscriptText(content: formatted)
+        TranscriptText(content: formatted, onComment: onComment)
     }
 
     private var formatted: NSAttributedString {

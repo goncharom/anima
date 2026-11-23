@@ -203,6 +203,12 @@ struct WorkspaceView: View {
                             taskBusy: workspace.workingIDs?.contains(id) == true,
                             reconnectID: workspace.reconnectID, backToAgents: back,
                             onActivate: { agentListActive = false; workspace.activate(id) },
+                            onComment: { excerpt in
+                                guard dialog == nil else { return }
+                                agentListActive = false
+                                workspace.activate(id)
+                                present(.comment(chat, excerpt))
+                            },
                             onAction: { handle($0, origin: chat, drawer: drawer) },
                             onCommand: { command($0, argument: $1, in: chat) })
         return pane.id(id).transition(.opacity)
@@ -396,6 +402,10 @@ struct WorkspaceView: View {
             }
         case .editQueue(let chat, let item):
             QueueDialog(chat: chat, item: item)
+        case .comment(let chat, let excerpt):
+            CommentDialog(excerpt: excerpt) { comment in
+                chat.appendComment(comment, on: excerpt)
+            }
         case .help(let chat):
             SelectionDialog(title: "Command palette", subtitle: "F2 / F3 panels · F6 focus · ⌘F find · ⌥↩ queue · Esc stop",
                             options: AnimaCommand.allCases.filter { $0 != .help }.map {

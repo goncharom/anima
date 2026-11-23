@@ -28,6 +28,7 @@ extension EnvironmentValues {
 
 struct TranscriptText: NSViewRepresentable {
     let content: NSAttributedString
+    var onComment: ((String) -> Void)? = nil
     @Environment(\.transcriptTextInteraction) private var interaction
 
     func makeNSView(context: Context) -> TextView {
@@ -51,6 +52,7 @@ struct TranscriptText: NSViewRepresentable {
 
     func updateNSView(_ view: TextView, context: Context) {
         view.interaction = interaction
+        view.onComment = onComment
         view.replaceContent(content)
     }
 
@@ -61,6 +63,7 @@ struct TranscriptText: NSViewRepresentable {
 
     final class TextView: NSTextView {
         var interaction: TranscriptTextInteraction?
+        var onComment: ((String) -> Void)?
         private(set) var trackingMouse = false
         private var measuredSize: CGSize?
 
@@ -74,6 +77,32 @@ struct TranscriptText: NSViewRepresentable {
             super.mouseDown(with: event)
             trackingMouse = false
             interaction?.activate()
+        }
+
+        override func menu(for event: NSEvent) -> NSMenu? {
+            // Capture the current selection before AppKit handles the click or a reply streams in.
+            let excerpt = onComment == nil ? nil : selectedExcerpt
+            let menu = super.menu(for: event)
+            guard let excerpt else { return menu }
+            let contextualMenu = menu?.copy() as? NSMenu ?? NSMenu()
+            let item = NSMenuItem(title: "Add Comment…", action: #selector(addComment(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = excerpt
+            if !contextualMenu.items.isEmpty { contextualMenu.insertItem(.separator(), at: 0) }
+            contextualMenu.insertItem(item, at: 0)
+            return contextualMenu
+        }
+
+        private var selectedExcerpt: String? {
+            let selection = selectedRange()
+            let text = string as NSString
+            guard selection.length > 0, NSMaxRange(selection) <= text.length else { return nil }
+            let excerpt = text.substring(with: selection)
+            return excerpt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : excerpt
+        }
+
+        @objc private func addComment(_ item: NSMenuItem) {
+            if let excerpt = item.representedObject as? String { onComment?(excerpt) }
         }
 
         func replaceContent(_ content: NSAttributedString) {

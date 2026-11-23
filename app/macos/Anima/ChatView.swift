@@ -11,6 +11,7 @@ struct ChatView: View {
     let reconnectID: UUID
     let backToAgents: (() -> Void)?
     let onActivate: () -> Void
+    let onComment: (String) -> Void
     let onAction: (WorkspaceAction) -> Void
     let onCommand: (AnimaCommand, String) -> Void
 
@@ -37,7 +38,7 @@ struct ChatView: View {
         VStack(spacing: 0) {
             header
             TranscriptView(chat: chat, hideThinking: hideThinking, isWorker: isWorker,
-                           findOpen: $findOpen, navigation: navigation, onActivate: onActivate)
+                           findOpen: $findOpen, navigation: navigation, onActivate: onActivate, onComment: onComment)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             VStack(alignment: .leading, spacing: 5) {
                 notices

@@ -1,0 +1,67 @@
+name: Build macOS DMG
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'app/macos/**'
+      - 'packages/protocol-swift/**'
+      - '.github/workflows/macos-dmg.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      BUILD_DIR: ${{ runner.temp }}/anima-build
+      DMG_ROOT: ${{ runner.temp }}/anima-dmg
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Build universal macOS app
+        run: |
+          xcodebuild \
+            -project app/macos/Anima.xcodeproj \
+            -scheme Anima \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath "$BUILD_DIR" \
+            ARCHS='arm64 x86_64' \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual \
+            build
+
+      - name: Create DMG
+        run: |
+          APP="$BUILD_DIR/Build/Products/Release/Anima.app"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          lipo -verify_arch arm64 x86_64 "$APP/Contents/MacOS/Anima"
+          mkdir -p "$DMG_ROOT" dist
+          ditto "$APP" "$DMG_ROOT/Anima.app"
+          ln -s /Applications "$DMG_ROOT/Applications"
+          hdiutil create \
+            -volname Anima \
+            -srcfolder "$DMG_ROOT" \
+            -ov -format UDZO \
+            dist/Anima-macos-universal.dmg
+          hdiutil verify dist/Anima-macos-universal.dmg
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: Anima-macos-universal
+          path: dist/Anima-macos-universal.dmg
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30

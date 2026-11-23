@@ -164,6 +164,25 @@ final class ConversationModel {
         if next != transcript { transcript = next }
     }
 
+    func appendComment(_ comment: String, on excerpt: String) {
+        let instruction = "Please address each of my comments on the following excerpts from your earlier replies."
+        let lines = draft.split(whereSeparator: \.isNewline)
+        // Keep the composer text as the source of truth, even after edits or draft recall.
+        let prefix = "Comment "
+        let previousNumber = lines.compactMap { line -> Int? in
+            guard line.hasPrefix(prefix), line.hasSuffix(":"),
+                  let number = Int(line.dropFirst(prefix.count).dropLast()), (1..<Int.max).contains(number) else { return nil }
+            return number
+        }.max() ?? 0
+        let quote = excerpt.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+            .map { "> \($0)" }.joined(separator: "\n")
+        let block = "Comment \(previousNumber + 1):\n\(quote)\n\nMy comment: \(comment)"
+        // Keep any slash-prefixed text, but don't let it dispatch the annotated draft as a command.
+        let parts = draft.hasPrefix("/") ? [instruction, draft, block]
+            : [draft, lines.contains(Substring(instruction)) ? "" : instruction, block]
+        draft = parts.filter { !$0.isEmpty }.joined(separator: "\n\n")
+    }
+
     func recordInput(_ text: String) {
         if inputHistory.last != text {
             inputHistory.append(text)

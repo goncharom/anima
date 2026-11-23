@@ -5,7 +5,7 @@ import SwiftUI
 enum WorkspaceDialog {
     case new(String), folder(ConversationModel), rename(ConversationModel), archive(ConversationModel)
     case conversations, archived(String?), models(ConversationModel), queue(ConversationModel)
-    case editQueue(ConversationModel, QueuedInput), help(ConversationModel?)
+    case editQueue(ConversationModel, QueuedInput), comment(ConversationModel, String), help(ConversationModel?)
 }
 
 struct PresentedDialog: Identifiable {
@@ -260,6 +260,40 @@ struct ModelDialog: View {
             do { models = try await client.rpc.listModels(request: .init()).value().models.filter(\.hasModel) }
             catch { if !Task.isCancelled { self.error = describe(error) } }
         }
+    }
+}
+
+struct CommentDialog: View {
+    let excerpt: String
+    let onAdd: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var comment = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        let note = comment.trimmingCharacters(in: .whitespacesAndNewlines)
+        DialogFrame(title: "Add Comment", subtitle: "The excerpt and your comment will be added to the draft. Nothing is sent.", width: 480) {
+            SectionCaption("SELECTED EXCERPT")
+            ScrollView {
+                Text(verbatim: excerpt)
+                    .font(Terminal.font()).foregroundStyle(Terminal.muted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(8)
+            }
+            .frame(maxHeight: 100)
+            .background(Terminal.surface, in: RoundedRectangle(cornerRadius: 5))
+            SectionCaption("YOUR COMMENT")
+            TextEditor(text: $comment).font(Terminal.font()).scrollContentBackground(.hidden)
+                .padding(5).frame(height: 95)
+                .background(Terminal.surface, in: RoundedRectangle(cornerRadius: 5))
+                .overlay { RoundedRectangle(cornerRadius: 5).strokeBorder(Terminal.border).allowsHitTesting(false) }
+                .accessibilityLabel("Your comment").focused($focused)
+            DialogButtons(actionLabel: "Add to Draft", enabled: !note.isEmpty) {
+                onAdd(note)
+                dismiss()
+            }
+        }
+        .defaultFocus($focused, true)
     }
 }
 

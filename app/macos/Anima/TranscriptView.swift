@@ -9,6 +9,7 @@ struct TranscriptView: View {
     @Binding var findOpen: Bool
     let navigation: TranscriptNavigation?
     let onActivate: () -> Void
+    let onComment: (String) -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var query = ""
     @State private var matchID: String?
@@ -171,7 +172,7 @@ struct TranscriptView: View {
                 .padding(8).frame(maxWidth: .infinity, alignment: .leading)
                 .background(Terminal.selected.opacity(0.55), in: RoundedRectangle(cornerRadius: 4))
                 .overlay(alignment: .leading) { Rectangle().fill(Terminal.accent.opacity(0.6)).frame(width: 1) }
-            case .assistant: MarkdownBody(text: text)
+            case .assistant: MarkdownBody(text: text, onComment: onComment)
             case .thinking:
                 VStack(alignment: .leading, spacing: 4) {
                     SectionCaption(row.streaming ? "THINKING…" : "THINKING")
