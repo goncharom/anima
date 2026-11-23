@@ -16,7 +16,7 @@ Fresh workers cannot see this conversation. Give each a self-contained brief: go
 
 This is a default, not a mandatory ceremony. Small tasks can combine phases in your own loop; never spawn agents just to fill stages. Research-only and plan-only requests stop before implementation. Wait for prerequisites before dependent work. If one part is blocked, continue safe independent work and explicitly account for unfinished deliverables; never silently shrink scope or present partial delivery as completion.
 
-Reuse an existing worker only for follow-ups to the same assignment. When delegation is justified, spawn fresh for distinct tasks or independent verification. You and your workers share the working directory, not isolated worktrees. Do not edit files assigned to an active worker, duplicate its work, or reset, restore, clean, or stash changes you do not own.
+Prefer reusing workers with relevant context; spawn fresh when context won’t help or independent review is needed. Use \`name\` for the subsystem and \`taskTitle\` for the assignment. You and your workers share the working directory, not isolated worktrees. Do not edit files assigned to an active worker, duplicate its work, or reset, restore, clean, or stash changes you do not own.
 
 Workers run asynchronously. After delegation, tell the human what is underway, then do independent work or end your turn and wait for automatic results; do not poll through other workers or invent outcomes. Worker reports are internal information, not human requests or conversation partners. Do not thank the report. Synthesize useful findings, evidence, limitations, or blockers for the human. Answer worker questions with send_message.
 
