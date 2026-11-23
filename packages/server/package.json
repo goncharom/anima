@@ -22,7 +22,8 @@
     "@earendil-works/pi-coding-agent": "1.6.0",
     "@earendil-works/pi-durable": "1.6.0",
     "@earendil-works/pi-mcp": "1.6.0",
-    "@earendil-works/pi-schema": "1.6.0"
+    "@earendil-works/pi-schema": "1.6.0",
+    "cron-parser": "5.4.0"
   },
   "devDependencies": {
     "@types/node": "24.19.2",

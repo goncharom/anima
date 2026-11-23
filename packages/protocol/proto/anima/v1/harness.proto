@@ -19,6 +19,10 @@ service HarnessService {
   rpc ListDirectories(ListDirectoriesRequest) returns (ListDirectoriesResponse);
   rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
   rpc UpdateQueuedInput(UpdateQueuedInputRequest) returns (UpdateQueuedInputResponse);
+  rpc ListSchedules(ListSchedulesRequest) returns (ListSchedulesResponse);
+  rpc UpdateSchedule(UpdateScheduleRequest) returns (UpdateScheduleResponse);
+  rpc GetSubagentDefaults(GetSubagentDefaultsRequest) returns (GetSubagentDefaultsResponse);
+  rpc UpdateSubagentDefaults(UpdateSubagentDefaultsRequest) returns (UpdateSubagentDefaultsResponse);
 }
 
 // IDs are opaque strings, scoped to the server's database. They remain valid
@@ -217,6 +221,7 @@ message ModelInfo {
   string name = 2;
   uint32 context_window = 3;
   bool reasoning = 4;
+  repeated string supported_thinking_levels = 5;
 }
 
 message ListModelsRequest {}
@@ -242,4 +247,70 @@ message UpdateQueuedInputResponse {
   // Exact updated/withdrawn content, for restoring withdrawn text to the editor.
   string content = 1;
   BusyBehavior when_busy = 2;
+}
+
+enum ScheduleStatus {
+  SCHEDULE_STATUS_UNSPECIFIED = 0;
+  SCHEDULE_STATUS_PENDING = 1;
+  SCHEDULE_STATUS_ACTIVE = 2;
+  SCHEDULE_STATUS_CANCELLED = 3;
+  SCHEDULE_STATUS_FAILED = 4;
+}
+
+message ScheduleInfo {
+  string schedule_id = 1;
+  string name = 2;
+  // Five-field cron expression interpreted in the IANA timezone below.
+  string cron = 3;
+  string timezone = 4;
+  string instruction = 5;
+  repeated string tools = 6;
+  ScheduleStatus status = 7;
+  string source_conversation_id = 8;
+  // Separate runner conversation; absent until approved.
+  optional string conversation_id = 9;
+  // Absolute time in ISO 8601 format.
+  optional string next_run_at = 10;
+  optional string error = 11;
+}
+
+message ListSchedulesRequest {}
+
+message ListSchedulesResponse {
+  repeated ScheduleInfo schedules = 1;
+}
+
+enum ScheduleAction {
+  SCHEDULE_ACTION_UNSPECIFIED = 0;
+  SCHEDULE_ACTION_APPROVE = 1;
+  SCHEDULE_ACTION_CANCEL = 2;
+}
+
+message UpdateScheduleRequest {
+  string schedule_id = 1;
+  ScheduleAction action = 2;
+}
+
+message UpdateScheduleResponse {
+  ScheduleInfo schedule = 1;
+}
+
+message SubagentDefaults {
+  ModelRef model = 1;
+  string thinking_level = 2;
+}
+
+message GetSubagentDefaultsRequest {}
+
+message GetSubagentDefaultsResponse {
+  SubagentDefaults defaults = 1;
+}
+
+message UpdateSubagentDefaultsRequest {
+  ModelRef model = 1;
+  string thinking_level = 2;
+}
+
+message UpdateSubagentDefaultsResponse {
+  SubagentDefaults defaults = 1;
 }

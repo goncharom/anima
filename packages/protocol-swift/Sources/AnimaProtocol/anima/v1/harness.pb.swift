@@ -65,6 +65,90 @@ public nonisolated enum Anima_V1_BusyBehavior: SwiftProtobuf.Enum, Swift.CaseIte
 
 }
 
+public nonisolated enum Anima_V1_ScheduleStatus: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public typealias RawValue = Int
+  case unspecified // = 0
+  case pending // = 1
+  case active // = 2
+  case cancelled // = 3
+  case failed // = 4
+  case UNRECOGNIZED(Int)
+
+  public init() {
+    self = .unspecified
+  }
+
+  public init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .pending
+    case 2: self = .active
+    case 3: self = .cancelled
+    case 4: self = .failed
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  public var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .pending: return 1
+    case .active: return 2
+    case .cancelled: return 3
+    case .failed: return 4
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  public static let allCases: [Anima_V1_ScheduleStatus] = [
+    .unspecified,
+    .pending,
+    .active,
+    .cancelled,
+    .failed,
+  ]
+
+}
+
+public nonisolated enum Anima_V1_ScheduleAction: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public typealias RawValue = Int
+  case unspecified // = 0
+  case approve // = 1
+  case cancel // = 2
+  case UNRECOGNIZED(Int)
+
+  public init() {
+    self = .unspecified
+  }
+
+  public init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .approve
+    case 2: self = .cancel
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  public var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .approve: return 1
+    case .cancel: return 2
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  public static let allCases: [Anima_V1_ScheduleAction] = [
+    .unspecified,
+    .approve,
+    .cancel,
+  ]
+
+}
+
 /// IDs are opaque strings, scoped to the server's database. They remain valid
 /// across restarts using the same database; resetting it invalidates existing IDs.
 public nonisolated struct Anima_V1_CreateConversationRequest: Sendable {
@@ -716,6 +800,8 @@ public nonisolated struct Anima_V1_ModelInfo: Sendable {
 
   public var reasoning: Bool = false
 
+  public var supportedThinkingLevels: [String] = []
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -804,12 +890,235 @@ public nonisolated struct Anima_V1_UpdateQueuedInputResponse: Sendable {
   public init() {}
 }
 
+public nonisolated struct Anima_V1_ScheduleInfo: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var scheduleID: String = String()
+
+  public var name: String = String()
+
+  /// Five-field cron expression interpreted in the IANA timezone below.
+  public var cron: String = String()
+
+  public var timezone: String = String()
+
+  public var instruction: String = String()
+
+  public var tools: [String] = []
+
+  public var status: Anima_V1_ScheduleStatus = .unspecified
+
+  public var sourceConversationID: String = String()
+
+  /// Separate runner conversation; absent until approved.
+  public var conversationID: String {
+    get {_conversationID ?? String()}
+    set {_conversationID = newValue}
+  }
+  /// Returns true if `conversationID` has been explicitly set.
+  public var hasConversationID: Bool {self._conversationID != nil}
+  /// Clears the value of `conversationID`. Subsequent reads from it will return its default value.
+  public mutating func clearConversationID() {self._conversationID = nil}
+
+  /// Absolute time in ISO 8601 format.
+  public var nextRunAt: String {
+    get {_nextRunAt ?? String()}
+    set {_nextRunAt = newValue}
+  }
+  /// Returns true if `nextRunAt` has been explicitly set.
+  public var hasNextRunAt: Bool {self._nextRunAt != nil}
+  /// Clears the value of `nextRunAt`. Subsequent reads from it will return its default value.
+  public mutating func clearNextRunAt() {self._nextRunAt = nil}
+
+  public var error: String {
+    get {_error ?? String()}
+    set {_error = newValue}
+  }
+  /// Returns true if `error` has been explicitly set.
+  public var hasError: Bool {self._error != nil}
+  /// Clears the value of `error`. Subsequent reads from it will return its default value.
+  public mutating func clearError() {self._error = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _conversationID: String? = nil
+  fileprivate var _nextRunAt: String? = nil
+  fileprivate var _error: String? = nil
+}
+
+public nonisolated struct Anima_V1_ListSchedulesRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+public nonisolated struct Anima_V1_ListSchedulesResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var schedules: [Anima_V1_ScheduleInfo] = []
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+public nonisolated struct Anima_V1_UpdateScheduleRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var scheduleID: String = String()
+
+  public var action: Anima_V1_ScheduleAction = .unspecified
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+public nonisolated struct Anima_V1_UpdateScheduleResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var schedule: Anima_V1_ScheduleInfo {
+    get {_schedule ?? Anima_V1_ScheduleInfo()}
+    set {_schedule = newValue}
+  }
+  /// Returns true if `schedule` has been explicitly set.
+  public var hasSchedule: Bool {self._schedule != nil}
+  /// Clears the value of `schedule`. Subsequent reads from it will return its default value.
+  public mutating func clearSchedule() {self._schedule = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _schedule: Anima_V1_ScheduleInfo? = nil
+}
+
+public nonisolated struct Anima_V1_SubagentDefaults: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var model: Anima_V1_ModelRef {
+    get {_model ?? Anima_V1_ModelRef()}
+    set {_model = newValue}
+  }
+  /// Returns true if `model` has been explicitly set.
+  public var hasModel: Bool {self._model != nil}
+  /// Clears the value of `model`. Subsequent reads from it will return its default value.
+  public mutating func clearModel() {self._model = nil}
+
+  public var thinkingLevel: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _model: Anima_V1_ModelRef? = nil
+}
+
+public nonisolated struct Anima_V1_GetSubagentDefaultsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+public nonisolated struct Anima_V1_GetSubagentDefaultsResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var defaults: Anima_V1_SubagentDefaults {
+    get {_defaults ?? Anima_V1_SubagentDefaults()}
+    set {_defaults = newValue}
+  }
+  /// Returns true if `defaults` has been explicitly set.
+  public var hasDefaults: Bool {self._defaults != nil}
+  /// Clears the value of `defaults`. Subsequent reads from it will return its default value.
+  public mutating func clearDefaults() {self._defaults = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _defaults: Anima_V1_SubagentDefaults? = nil
+}
+
+public nonisolated struct Anima_V1_UpdateSubagentDefaultsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var model: Anima_V1_ModelRef {
+    get {_model ?? Anima_V1_ModelRef()}
+    set {_model = newValue}
+  }
+  /// Returns true if `model` has been explicitly set.
+  public var hasModel: Bool {self._model != nil}
+  /// Clears the value of `model`. Subsequent reads from it will return its default value.
+  public mutating func clearModel() {self._model = nil}
+
+  public var thinkingLevel: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _model: Anima_V1_ModelRef? = nil
+}
+
+public nonisolated struct Anima_V1_UpdateSubagentDefaultsResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var defaults: Anima_V1_SubagentDefaults {
+    get {_defaults ?? Anima_V1_SubagentDefaults()}
+    set {_defaults = newValue}
+  }
+  /// Returns true if `defaults` has been explicitly set.
+  public var hasDefaults: Bool {self._defaults != nil}
+  /// Clears the value of `defaults`. Subsequent reads from it will return its default value.
+  public mutating func clearDefaults() {self._defaults = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _defaults: Anima_V1_SubagentDefaults? = nil
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate nonisolated let _protobuf_package = "anima.v1"
 
 nonisolated extension Anima_V1_BusyBehavior: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0BUSY_BEHAVIOR_UNSPECIFIED\0\u{1}BUSY_BEHAVIOR_QUEUE\0\u{1}BUSY_BEHAVIOR_STEER\0\u{1}BUSY_BEHAVIOR_REJECT\0")
+}
+
+nonisolated extension Anima_V1_ScheduleStatus: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SCHEDULE_STATUS_UNSPECIFIED\0\u{1}SCHEDULE_STATUS_PENDING\0\u{1}SCHEDULE_STATUS_ACTIVE\0\u{1}SCHEDULE_STATUS_CANCELLED\0\u{1}SCHEDULE_STATUS_FAILED\0")
+}
+
+nonisolated extension Anima_V1_ScheduleAction: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SCHEDULE_ACTION_UNSPECIFIED\0\u{1}SCHEDULE_ACTION_APPROVE\0\u{1}SCHEDULE_ACTION_CANCEL\0")
 }
 
 nonisolated extension Anima_V1_CreateConversationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
@@ -1801,7 +2110,7 @@ nonisolated extension Anima_V1_ListDirectoriesResponse: SwiftProtobuf.Message, S
 
 nonisolated extension Anima_V1_ModelInfo: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ModelInfo"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}model\0\u{1}name\0\u{3}context_window\0\u{1}reasoning\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}model\0\u{1}name\0\u{3}context_window\0\u{1}reasoning\0\u{3}supported_thinking_levels\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1813,6 +2122,7 @@ nonisolated extension Anima_V1_ModelInfo: SwiftProtobuf.Message, SwiftProtobuf._
       case 2: try { try decoder.decodeSingularStringField(value: &self.name) }()
       case 3: try { try decoder.decodeSingularUInt32Field(value: &self.contextWindow) }()
       case 4: try { try decoder.decodeSingularBoolField(value: &self.reasoning) }()
+      case 5: try { try decoder.decodeRepeatedStringField(value: &self.supportedThinkingLevels) }()
       default: break
       }
     }
@@ -1835,6 +2145,9 @@ nonisolated extension Anima_V1_ModelInfo: SwiftProtobuf.Message, SwiftProtobuf._
     if self.reasoning != false {
       try visitor.visitSingularBoolField(value: self.reasoning, fieldNumber: 4)
     }
+    if !self.supportedThinkingLevels.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.supportedThinkingLevels, fieldNumber: 5)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -1843,6 +2156,7 @@ nonisolated extension Anima_V1_ModelInfo: SwiftProtobuf.Message, SwiftProtobuf._
     if lhs.name != rhs.name {return false}
     if lhs.contextWindow != rhs.contextWindow {return false}
     if lhs.reasoning != rhs.reasoning {return false}
+    if lhs.supportedThinkingLevels != rhs.supportedThinkingLevels {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1991,6 +2305,373 @@ nonisolated extension Anima_V1_UpdateQueuedInputResponse: SwiftProtobuf.Message,
   public static func ==(lhs: Anima_V1_UpdateQueuedInputResponse, rhs: Anima_V1_UpdateQueuedInputResponse) -> Bool {
     if lhs.content != rhs.content {return false}
     if lhs.whenBusy != rhs.whenBusy {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Anima_V1_ScheduleInfo: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ScheduleInfo"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}schedule_id\0\u{1}name\0\u{1}cron\0\u{1}timezone\0\u{1}instruction\0\u{1}tools\0\u{1}status\0\u{3}source_conversation_id\0\u{3}conversation_id\0\u{3}next_run_at\0\u{1}error\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.scheduleID) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.cron) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.timezone) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.instruction) }()
+      case 6: try { try decoder.decodeRepeatedStringField(value: &self.tools) }()
+      case 7: try { try decoder.decodeSingularEnumField(value: &self.status) }()
+      case 8: try { try decoder.decodeSingularStringField(value: &self.sourceConversationID) }()
+      case 9: try { try decoder.decodeSingularStringField(value: &self._conversationID) }()
+      case 10: try { try decoder.decodeSingularStringField(value: &self._nextRunAt) }()
+      case 11: try { try decoder.decodeSingularStringField(value: &self._error) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.scheduleID.isEmpty {
+      try visitor.visitSingularStringField(value: self.scheduleID, fieldNumber: 1)
+    }
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 2)
+    }
+    if !self.cron.isEmpty {
+      try visitor.visitSingularStringField(value: self.cron, fieldNumber: 3)
+    }
+    if !self.timezone.isEmpty {
+      try visitor.visitSingularStringField(value: self.timezone, fieldNumber: 4)
+    }
+    if !self.instruction.isEmpty {
+      try visitor.visitSingularStringField(value: self.instruction, fieldNumber: 5)
+    }
+    if !self.tools.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.tools, fieldNumber: 6)
+    }
+    if self.status != .unspecified {
+      try visitor.visitSingularEnumField(value: self.status, fieldNumber: 7)
+    }
+    if !self.sourceConversationID.isEmpty {
+      try visitor.visitSingularStringField(value: self.sourceConversationID, fieldNumber: 8)
+    }
+    try { if let v = self._conversationID {
+      try visitor.visitSingularStringField(value: v, fieldNumber: 9)
+    } }()
+    try { if let v = self._nextRunAt {
+      try visitor.visitSingularStringField(value: v, fieldNumber: 10)
+    } }()
+    try { if let v = self._error {
+      try visitor.visitSingularStringField(value: v, fieldNumber: 11)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Anima_V1_ScheduleInfo, rhs: Anima_V1_ScheduleInfo) -> Bool {
+    if lhs.scheduleID != rhs.scheduleID {return false}
+    if lhs.name != rhs.name {return false}
+    if lhs.cron != rhs.cron {return false}
+    if lhs.timezone != rhs.timezone {return false}
+    if lhs.instruction != rhs.instruction {return false}
+    if lhs.tools != rhs.tools {return false}
+    if lhs.status != rhs.status {return false}
+    if lhs.sourceConversationID != rhs.sourceConversationID {return false}
+    if lhs._conversationID != rhs._conversationID {return false}
+    if lhs._nextRunAt != rhs._nextRunAt {return false}
+    if lhs._error != rhs._error {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Anima_V1_ListSchedulesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ListSchedulesRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    // Load everything into unknown fields
+    while try decoder.nextFieldNumber() != nil {}
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Anima_V1_ListSchedulesRequest, rhs: Anima_V1_ListSchedulesRequest) -> Bool {
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Anima_V1_ListSchedulesResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ListSchedulesResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}schedules\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.schedules) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.schedules.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.schedules, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Anima_V1_ListSchedulesResponse, rhs: Anima_V1_ListSchedulesResponse) -> Bool {
+    if lhs.schedules != rhs.schedules {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Anima_V1_UpdateScheduleRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".UpdateScheduleRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}schedule_id\0\u{1}action\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.scheduleID) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.action) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.scheduleID.isEmpty {
+      try visitor.visitSingularStringField(value: self.scheduleID, fieldNumber: 1)
+    }
+    if self.action != .unspecified {
+      try visitor.visitSingularEnumField(value: self.action, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Anima_V1_UpdateScheduleRequest, rhs: Anima_V1_UpdateScheduleRequest) -> Bool {
+    if lhs.scheduleID != rhs.scheduleID {return false}
+    if lhs.action != rhs.action {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Anima_V1_UpdateScheduleResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".UpdateScheduleResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}schedule\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._schedule) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._schedule {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Anima_V1_UpdateScheduleResponse, rhs: Anima_V1_UpdateScheduleResponse) -> Bool {
+    if lhs._schedule != rhs._schedule {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Anima_V1_SubagentDefaults: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".SubagentDefaults"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}model\0\u{3}thinking_level\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._model) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.thinkingLevel) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._model {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if !self.thinkingLevel.isEmpty {
+      try visitor.visitSingularStringField(value: self.thinkingLevel, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Anima_V1_SubagentDefaults, rhs: Anima_V1_SubagentDefaults) -> Bool {
+    if lhs._model != rhs._model {return false}
+    if lhs.thinkingLevel != rhs.thinkingLevel {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Anima_V1_GetSubagentDefaultsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetSubagentDefaultsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    // Load everything into unknown fields
+    while try decoder.nextFieldNumber() != nil {}
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Anima_V1_GetSubagentDefaultsRequest, rhs: Anima_V1_GetSubagentDefaultsRequest) -> Bool {
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Anima_V1_GetSubagentDefaultsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetSubagentDefaultsResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}defaults\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._defaults) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._defaults {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Anima_V1_GetSubagentDefaultsResponse, rhs: Anima_V1_GetSubagentDefaultsResponse) -> Bool {
+    if lhs._defaults != rhs._defaults {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Anima_V1_UpdateSubagentDefaultsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".UpdateSubagentDefaultsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}model\0\u{3}thinking_level\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._model) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.thinkingLevel) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._model {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if !self.thinkingLevel.isEmpty {
+      try visitor.visitSingularStringField(value: self.thinkingLevel, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Anima_V1_UpdateSubagentDefaultsRequest, rhs: Anima_V1_UpdateSubagentDefaultsRequest) -> Bool {
+    if lhs._model != rhs._model {return false}
+    if lhs.thinkingLevel != rhs.thinkingLevel {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Anima_V1_UpdateSubagentDefaultsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".UpdateSubagentDefaultsResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}defaults\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._defaults) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._defaults {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Anima_V1_UpdateSubagentDefaultsResponse, rhs: Anima_V1_UpdateSubagentDefaultsResponse) -> Bool {
+    if lhs._defaults != rhs._defaults {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

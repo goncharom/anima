@@ -93,6 +93,7 @@ private struct ServerSettings: View {
     @State private var port: String
     @State private var tls: Bool
     @State private var error: String?
+    @State private var defaultsWorkspace: WorkspaceModel?
 
     init(connection: ServerConnection) {
         self.connection = connection
@@ -129,6 +130,9 @@ private struct ServerSettings: View {
             TerminalRule()
             connectionStatus
             HStack {
+                Button("Subagent Defaults…") { defaultsWorkspace = connection.workspace }
+                    .buttonStyle(TerminalButtonStyle())
+                    .disabled(connection.workspace?.directoryConnection.isReady != true)
                 Spacer()
                 if connection.workspace != nil {
                     Button("Disconnect", action: connection.disconnect).buttonStyle(TerminalButtonStyle())
@@ -140,6 +144,11 @@ private struct ServerSettings: View {
         .padding(20).frame(width: 440)
         .font(Terminal.font()).foregroundStyle(Terminal.text).tint(Terminal.accent)
         .background(Terminal.black)
+        .sheet(item: $defaultsWorkspace) { workspace in
+            SubagentDefaultsView(client: workspace.client)
+                .font(Terminal.font()).foregroundStyle(Terminal.text).tint(Terminal.accent)
+                .preferredColorScheme(.dark)
+        }
         .onChange(of: host) { error = nil }
         .onChange(of: port) { error = nil }
     }
@@ -172,7 +181,7 @@ private struct ServerSettings: View {
 }
 
 enum AnimaCommand: String, CaseIterable, Identifiable {
-    case new, conversations, rename, archive, archived, cwd, model, queue, compact, sidebar, agents, resize, help, quit, server
+    case new, conversations, rename, archive, archived, cwd, model, queue, compact, schedules, sidebar, agents, resize, help, quit, server
 
     var id: String { rawValue }
     var slash: String { "/\(rawValue)" }
@@ -188,6 +197,7 @@ enum AnimaCommand: String, CaseIterable, Identifiable {
         case .model: "Choose the chat model (⌃L)"
         case .queue: "Edit or withdraw queued inputs"
         case .compact: "Summarize older context: /compact [instructions]"
+        case .schedules: "Review, approve, or cancel durable scheduled jobs"
         case .sidebar: "Toggle conversations (F2)"
         case .agents: "Toggle subagents (F3)"
         case .resize: "Resize a panel: /resize left|right columns"
@@ -227,6 +237,8 @@ private struct WorkspaceCommands: Commands {
             Divider()
             Button("Switch Conversation…") { workspace?.handle(.command(.conversations)) }
                 .keyboardShortcut("k").disabled(workspace?.connected != true)
+            Button("Schedules…") { workspace?.handle(.command(.schedules)) }
+                .disabled(workspace?.connected != true)
             Button("Toggle Conversations") { workspace?.handle(.command(.sidebar)) }
                 .keyboardShortcut(functionKey(2), modifiers: []).disabled(workspace == nil)
             Button("Toggle Subagents") { workspace?.handle(.command(.agents)) }

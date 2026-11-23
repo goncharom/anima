@@ -115,6 +115,7 @@ struct WorkspaceView: View {
                 sidebarButton("New conversation", icon: "plus", shortcut: "⌘N", accent: true) {
                     command(.new, in: workspace.coordinatorID.map(workspace.chat))
                 }
+                sidebarButton("Schedules…", icon: "clock.arrow.circlepath") { present(.schedules) }
                 sidebarButton("Archived…", icon: "archivebox") { present(.archived(nil)) }
             }
             .disabled(!workspace.directoryConnection.isReady)
@@ -342,6 +343,7 @@ struct WorkspaceView: View {
         case .new:
             guard workspace.directoryConnection.isReady else { workspace.error = "Connect to a server first."; return }
             present(.new(argument.isEmpty ? chat?.status?.cwd ?? "" : argument))
+        case .schedules: present(.schedules)
         case .conversations: present(.conversations)
         case .archived:
             let info = chat.flatMap { workspace.info($0.id) }
@@ -393,6 +395,8 @@ struct WorkspaceView: View {
             }
         case .models(let chat):
             ModelDialog(client: workspace.client, chat: chat)
+        case .schedules:
+            SchedulesDialog(client: workspace.client)
         case .queue(let chat):
             SelectionDialog(title: "Queued inputs", options: chat.queued.map {
                 SelectionOption(id: $0.id, title: cleanText(String($0.content.prefix(200))), subtitle: $0.modeLabel)

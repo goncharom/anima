@@ -1,8 +1,8 @@
 import { BusyBehavior } from "@anima/protocol-ts";
 import { DynamicBorder, getSelectListTheme } from "@earendil-works/pi-coding-agent";
 import {
-  CancellableLoader, Container, Editor, fuzzyFilter, getKeybindings, Input, isFocusable, matchesKey,
-  SelectList, type Component, type Focusable, type OverlayHandle, type OverlayOptions, type SelectItem, type TUI,
+  CancellableLoader, Container, Editor, fuzzyFilter, getKeybindings, Input, isFocusable, isKeyRelease, isKeyRepeat, matchesKey,
+  SelectList, Text, type Component, type Focusable, type OverlayHandle, type OverlayOptions, type SelectItem, type TUI,
 } from "@earendil-works/pi-tui";
 import { type QueuedInput, type RemoteClient } from "./client.ts";
 import { button, clean, colors, editorTheme, line } from "./ui.ts";
@@ -173,6 +173,38 @@ export class Dialogs {
       input.handleInput("\x05"); // Place the cursor after the initial value (Ctrl+E).
       input.onSubmit = value => { if (value.trim()) done(value); };
       return new Pane(title, input, () => done());
+    });
+  }
+  review(title: string, detail: string, actions: { key: "a" | "c" | "o"; label: string }[]) {
+    return this.show<string>(done => {
+      const input = new Container();
+      const text = new Text(clean(detail), 0, 0);
+      let offset = 0, maxOffset = 0, pageSize = 1;
+      input.addChild({
+        render: width => {
+          const lines = text.render(width);
+          pageSize = Math.max(1, Math.floor(this.ui.terminal.rows * 0.9) - actions.length - 5);
+          maxOffset = Math.max(0, lines.length - pageSize);
+          offset = Math.min(maxOffset, offset);
+          return lines.slice(offset, offset + pageSize);
+        },
+        invalidate: () => text.invalidate(),
+      });
+      input.addChild(line(() => colors.muted(maxOffset > 0 ? "↑/↓ or PgUp/PgDn to scroll · Esc to go back" : "Esc to go back")));
+      for (const { key, label } of actions) input.addChild(button(`${key.toUpperCase()}  ${label}`, () => done(key)));
+      const handleInput = (data: string) => {
+        if (isKeyRelease(data)) return;
+        const scroll = matchesKey(data, "down") ? 1 : matchesKey(data, "up") ? -1
+          : matchesKey(data, "pageDown") ? pageSize : matchesKey(data, "pageUp") ? -pageSize : 0;
+        if (scroll) {
+          offset = Math.min(maxOffset, Math.max(0, offset + scroll));
+          this.ui.requestRender();
+        } else if (!isKeyRepeat(data)) {
+          const action = actions.find(({ key }) => matchesKey(data, key));
+          if (action) done(action.key);
+        }
+      };
+      return new Pane(title, Object.assign(input, { handleInput }), () => done());
     });
   }
   async wait<T>(title: string, operation: (signal: AbortSignal) => Promise<T>): Promise<T | undefined> {

@@ -5,6 +5,7 @@ import SwiftUI
 struct TranscriptView: View {
     let chat: ConversationModel
     let hideThinking: Bool
+    let hideToolCalls: Bool
     let isWorker: Bool
     @Binding var findOpen: Bool
     let navigation: TranscriptNavigation?
@@ -25,10 +26,13 @@ struct TranscriptView: View {
     private static let end = "transcript:end"
 
     private var rows: [TranscriptRow] {
-        guard hideThinking else { return chat.transcript.rows }
+        guard hideThinking || hideToolCalls else { return chat.transcript.rows }
         return chat.transcript.rows.filter { row in
-            if case .text(.thinking, _) = row.content { return false }
-            return true
+            switch row.content {
+            case .text(.thinking, _): !hideThinking
+            case .tool: !hideToolCalls
+            default: true
+            }
         }
     }
 
@@ -49,6 +53,9 @@ struct TranscriptView: View {
             else { searchFocused = false; matchID = nil; chat.focusRequest = UUID() }
         }
         .onChange(of: query) { jumpToMatch(matches, offset: 0, reset: true) }
+        .onChange(of: hideToolCalls) {
+            if let matchID, !matches.contains(matchID) { self.matchID = nil }
+        }
         .onChange(of: chat.findRequest) { if findOpen { searchFocused = true } }
     }
 
@@ -120,6 +127,9 @@ struct TranscriptView: View {
             .onChange(of: hideThinking) {
                 if chat.followsLatest && !selection.holdsPosition { proxy.scrollTo(Self.end, anchor: .bottom) }
             }
+            .onChange(of: hideToolCalls) {
+                if chat.followsLatest && !selection.holdsPosition { proxy.scrollTo(Self.end, anchor: .bottom) }
+            }
             .onChange(of: chat.historyEpoch) { followLatest(proxy) }
             .onChange(of: matchID) { if let matchID { proxy.scrollTo(matchID, anchor: .center) } }
             .onChange(of: navigation) {
@@ -156,11 +166,12 @@ struct TranscriptView: View {
         case .image(let image): TranscriptImage(payload: image)
         case .text(let style, let text):
             switch style {
-            case .user, .delegated:
+            case .user, .scheduled, .delegated:
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline, spacing: 5) {
-                        Text(style == .user ? "❯" : "↳").font(Terminal.font(Terminal.metaSize)).foregroundStyle(Terminal.accent)
-                        SectionCaption(style == .user ? "YOU" : "DELEGATED INSTRUCTION")
+                        Text(style == .delegated ? "↳" : "❯").font(Terminal.font(Terminal.metaSize)).foregroundStyle(Terminal.accent)
+                        SectionCaption(style == .scheduled ? "SCHEDULED PROMPT" :
+                                         (style == .delegated ? "DELEGATED INSTRUCTION" : "YOU"))
                     }
                     if style == .delegated {
                         MarkdownBody(text: text)
@@ -294,6 +305,7 @@ struct TranscriptView: View {
                 ?? (chat.followsLatest ? visible.count : -1)
             let indices = visible.indices.filter {
                 if case .text(.user, _) = visible[$0].content { return true }
+                if case .text(.scheduled, _) = visible[$0].content { return true }
                 if case .text(.delegated, _) = visible[$0].content { return true }
                 return false
             }

@@ -7,7 +7,7 @@ import { create, type JsonObject } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
 import { BACKGROUND_CONTEXT, withAbortSignal, type Context } from "@earendil-works/chord/context";
-import { createModels, type Models } from "@earendil-works/pi-ai/models";
+import { createModels, getSupportedThinkingLevels, type Models } from "@earendil-works/pi-ai/models";
 import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
 import { CodemodeSandbox } from "@earendil-works/pi-codemode";
 import {
@@ -36,6 +36,8 @@ import { ProjectCodingTools } from "./extensions/project-resources.ts";
 import { BackgroundSubagents, coordinatorCapabilities, SubagentsDoc } from "./extensions/subagents.ts";
 import { createReporter, InputRequests } from "./extensions/conversation-reporter.ts";
 import { openMcp } from "./extensions/mcp.ts";
+import { listSchedules, updateSchedule } from "./extensions/schedules.ts";
+import { subagentDefaults, updateSubagentDefaults } from "./extensions/subagent-defaults.ts";
 import {
   abortConversation, conversationStatus, ConversationsDoc, directoryPath,
   displayName, listDirectories, registerConversation, updateConversation, updateQueuedInput,
@@ -276,13 +278,31 @@ export async function startServer(harness?: Harness, options: { port?: number; m
           return { models: available.map(model => ({
             model: { provider: model.provider, modelId: model.id }, name: model.name,
             contextWindow: model.contextWindow, reasoning: model.reasoning,
+            supportedThinkingLevels: getSupportedThinkingLevels(model),
           })) };
+        },
+        async getSubagentDefaults(_request, rpc) {
+          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
+          return { defaults: await runtime.commit(subagentDefaults, context) };
+        },
+        async updateSubagentDefaults(request, rpc) {
+          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
+          return { defaults: await updateSubagentDefaults(runtime, models, request, context) };
         },
         async updateQueuedInput(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
           parseId(request.submissionId);
           const conversation = await requireConversation(runtime, request.conversationId, context);
           return updateQueuedInput(conversation, request, context);
+        },
+        async listSchedules(_request, rpc) {
+          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
+          return { schedules: await listSchedules(runtime, context) };
+        },
+        async updateSchedule(request, rpc) {
+          const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);
+          const schedule = await updateSchedule(runtime, request.scheduleId, request.action, models, context);
+          return { schedule };
         },
         async getEntries(request, rpc) {
           const context = withAbortSignal(rpc.signal, BACKGROUND_CONTEXT);

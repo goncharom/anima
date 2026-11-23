@@ -124,7 +124,7 @@ struct TranscriptTool: Equatable {
 }
 
 struct TranscriptRow: Equatable, Identifiable {
-    enum Style: Equatable { case user, delegated, assistant, thinking, notice, warning, error }
+    enum Style: Equatable { case user, scheduled, delegated, assistant, thinking, notice, warning, error }
     enum Content: Equatable {
         case text(Style, String)
         case image(InlineImage)
@@ -156,6 +156,7 @@ struct TranscriptContent: Equatable {
             for (index, value) in (payload["model"]?.items ?? []).enumerated() {
                 guard let message = value.object else { continue }
                 appendMessage(message, id: "\(entry.id):\(index)", delegated: data?["origin"]?.text == "agent",
+                              scheduled: kind == "anima.scheduled-message" || data?["origin"]?.text == "schedule",
                               delegatedText: kind == "anima.agent-message" ? data?["content"]?.text : nil)
             }
         }
@@ -208,13 +209,14 @@ struct TranscriptContent: Equatable {
     }
 
     private mutating func appendMessage(
-        _ message: Google_Protobuf_Struct, id: String, delegated: Bool = false,
+        _ message: Google_Protobuf_Struct, id: String, delegated: Bool = false, scheduled: Bool = false,
         delegatedText: String? = nil, streaming: Bool = false
     ) {
         let content = message["content"]
         switch message["role"]?.text {
         case "user", "assistant":
-            let style: TranscriptRow.Style = message["role"]?.text == "assistant" ? .assistant : (delegated ? .delegated : .user)
+            let style: TranscriptRow.Style = message["role"]?.text == "assistant" ? .assistant :
+                (scheduled ? .scheduled : (delegated ? .delegated : .user))
             let textID = style == .assistant ? "\(id):response" : id
             if delegated, let delegatedText {
                 appendText(delegatedText, style, id: textID)

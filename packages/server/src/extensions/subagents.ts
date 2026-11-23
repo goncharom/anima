@@ -15,6 +15,8 @@ import { CodingTools } from "@earendil-works/pi-durable/tools";
 import { ConversationReporter, createReporter } from "./conversation-reporter.ts";
 import { ConversationsDoc, displayName, displayTaskTitle, registerConversation } from "./conversations.ts";
 import { COORDINATOR_PROMPT, workerPrompt } from "../prompts.ts";
+import { ScheduleTools, ScheduledJobs } from "./schedules.ts";
+import { subagentDefaults } from "./subagent-defaults.ts";
 
 /** Extension references select by name; each harness installs its own codemode sandbox. */
 export const WorkerCapabilities = {
@@ -71,7 +73,7 @@ const subagent = defineTool({
     "Start a background subagent for an independent task. Each call starts a new agent and returns immediately. " +
     "For related follow-ups, reuse an existing conversation with send_message instead. " +
     "Give it a short name, a short task title, and a self-contained message with all context it needs. It inherits your working directory " +
-    "and starts with openai/gpt-6-luna at high thinking with coding tools, but cannot create subagents. Its final answer (or failure) will " +
+    "and uses the server's default subagent model and thinking level, with coding tools but no ability to create subagents. Its final answer (or failure) will " +
     "automatically arrive here as a follow-up message. The result includes its conversationId.",
   parameters: obj({
     name: str({ minLength: 1, description: "A short label for this subagent." }),
@@ -85,6 +87,7 @@ const subagent = defineTool({
     const conversationId = await api.commit(async (tx) => {
       const launch = await tx.doc(Launch, api.taskId);
       if (launch.conversationId !== undefined) return launch.conversationId;
+      const defaults = await subagentDefaults(tx);
 
       const anchor = await tx.createTask(Anchor, null, { ownership: { kind: "conversation" }, background: true });
       const child = await tx.createConversation({ ownership: { kind: "task", taskId: anchor } });
@@ -93,8 +96,7 @@ const subagent = defineTool({
       info.taskTitle = taskTitle;
       await configure(tx, child.id, {
         ...WorkerCapabilities,
-        model: { provider: "openai", modelId: "gpt-6-luna" },
-        thinkingLevel: "high",
+        ...defaults,
         modelTools: null,
         instructions: workerPrompt(name),
       });
@@ -154,7 +156,7 @@ const sendMessage = defineTool({
 });
 
 /** Delegation tools available alongside the coordinator's coding tools. */
-export const CoordinatorTools = [subagent, sendMessage];
+export const CoordinatorTools = [subagent, sendMessage, ...ScheduleTools];
 
 export function coordinatorCapabilities(instructions?: string): AgentChange {
   return {
@@ -166,6 +168,6 @@ export function coordinatorCapabilities(instructions?: string): AgentChange {
 /** Launch non-recursive background children and automatically report their answers. */
 export const BackgroundSubagents: Extension = defineExtension({
   name: "background-subagents",
-  tasks: [Anchor, ConversationReporter],
+  tasks: [Anchor, ConversationReporter, ...ScheduledJobs],
   tools: CoordinatorTools,
 });

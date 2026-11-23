@@ -18,6 +18,7 @@ export const COMMANDS: SlashCommand[] = [
   { name: "cwd", description: "Change this conversation's folder while idle" },
   { name: "model", description: "Choose this conversation's chat model" },
   { name: "queue", description: "Edit queued steering/follow-up messages" },
+  { name: "schedules", description: "Review and manage scheduled jobs" },
   { name: "compact", description: "Summarize older context: /compact [instructions]" },
   { name: "sidebar", description: "Toggle human conversations (F2)" },
   { name: "agents", description: "Toggle this coordinator's subagents (F3)" },

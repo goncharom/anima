@@ -34,7 +34,7 @@ export class Sidebar extends SidePanel {
     for (const [label, command] of [
       ["＋ New conversation", "new"], ["Rename selected", "rename"],
       ["Change folder", "cwd"], ["Archive selected", "archive"],
-      ["Archived…", "archived"], ["Help", "help"],
+      ["Archived…", "archived"], ["Schedules…", "schedules"], ["Help", "help"],
     ]) this.addChild(button(() => colors.muted(label), () => actions.command(command)), { basis: 1, shrink: 0 });
   }
   update(conversations: ConversationInfo[], selected: string, busy: Set<string>, connected: boolean) {

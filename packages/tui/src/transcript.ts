@@ -126,11 +126,12 @@ export class Transcript extends Container {
       for (const [index, message] of (entry.model ?? []).entries()) {
         const key = `${entry.id}:${index}`;
         if (message.role === "user") {
-          if (data.origin === "agent") {
+          const scheduled = entry.kind === "anima.scheduled-message";
+          if (scheduled || data.origin === "agent") {
             this.addMessage(key, () => {
               const group = new Container();
-              group.addChild(new Text(colors.accent("Delegated instruction"), 1, 0));
-              group.addChild(new Markdown(clean(entry.kind === "anima.agent-message" && typeof data.content === "string"
+              group.addChild(new Text(colors.accent(scheduled ? "Scheduled run" : "Delegated instruction"), 1, 0));
+              group.addChild(new Markdown(clean((scheduled || entry.kind === "anima.agent-message") && typeof data.content === "string"
                 ? data.content : contentText(message.content)), 1, 1, getMarkdownTheme()));
               return group;
             });

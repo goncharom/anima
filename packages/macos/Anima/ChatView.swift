@@ -15,6 +15,7 @@ struct ChatView: View {
     let onAction: (WorkspaceAction) -> Void
     let onCommand: (AnimaCommand, String) -> Void
 
+    @AppStorage("transcript.hideToolCalls") private var hideToolCalls = false
     @State private var findOpen = false
     @State private var thinkingOpen = false
     @State private var navigation: TranscriptNavigation?
@@ -37,7 +38,7 @@ struct ChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            TranscriptView(chat: chat, hideThinking: hideThinking, isWorker: isWorker,
+            TranscriptView(chat: chat, hideThinking: hideThinking, hideToolCalls: hideToolCalls, isWorker: isWorker,
                            findOpen: $findOpen, navigation: navigation, onActivate: onActivate, onComment: onComment)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             VStack(alignment: .leading, spacing: 5) {
@@ -103,7 +104,9 @@ struct ChatView: View {
                 .disabled(!chat.ready)
                 Divider()
                 Button(hideThinking ? "Show thinking blocks" : "Hide thinking blocks") { onAction(.toggleThinking) }
+                Button(hideToolCalls ? "Show tool calls" : "Hide tool calls") { hideToolCalls.toggle() }
                 Button(chat.expandAllTools ? "Collapse tool details" : "Expand tool details") { onAction(.toggleTools) }
+                    .disabled(hideToolCalls)
                 Divider()
                 Button("Archive…") { onCommand(.archive, "") }.disabled(!chat.ready)
             } label: {

@@ -50,6 +50,18 @@ public protocol Anima_V1_HarnessServiceClientInterface: Sendable {
 
     @available(iOS 13, *)
     func `updateQueuedInput`(request: Anima_V1_UpdateQueuedInputRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_UpdateQueuedInputResponse>
+
+    @available(iOS 13, *)
+    func `listSchedules`(request: Anima_V1_ListSchedulesRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_ListSchedulesResponse>
+
+    @available(iOS 13, *)
+    func `updateSchedule`(request: Anima_V1_UpdateScheduleRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_UpdateScheduleResponse>
+
+    @available(iOS 13, *)
+    func `getSubagentDefaults`(request: Anima_V1_GetSubagentDefaultsRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_GetSubagentDefaultsResponse>
+
+    @available(iOS 13, *)
+    func `updateSubagentDefaults`(request: Anima_V1_UpdateSubagentDefaultsRequest, headers: Connect.Headers) async -> ResponseMessage<Anima_V1_UpdateSubagentDefaultsResponse>
 }
 
 /// Concrete implementation of `Anima_V1_HarnessServiceClientInterface`.
@@ -125,6 +137,26 @@ public final class Anima_V1_HarnessServiceClient: Anima_V1_HarnessServiceClientI
         return await self.client.unary(path: "/anima.v1.HarnessService/UpdateQueuedInput", idempotencyLevel: .unknown, request: request, headers: headers)
     }
 
+    @available(iOS 13, *)
+    public func `listSchedules`(request: Anima_V1_ListSchedulesRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Anima_V1_ListSchedulesResponse> {
+        return await self.client.unary(path: "/anima.v1.HarnessService/ListSchedules", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
+    public func `updateSchedule`(request: Anima_V1_UpdateScheduleRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Anima_V1_UpdateScheduleResponse> {
+        return await self.client.unary(path: "/anima.v1.HarnessService/UpdateSchedule", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
+    public func `getSubagentDefaults`(request: Anima_V1_GetSubagentDefaultsRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Anima_V1_GetSubagentDefaultsResponse> {
+        return await self.client.unary(path: "/anima.v1.HarnessService/GetSubagentDefaults", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
+    public func `updateSubagentDefaults`(request: Anima_V1_UpdateSubagentDefaultsRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Anima_V1_UpdateSubagentDefaultsResponse> {
+        return await self.client.unary(path: "/anima.v1.HarnessService/UpdateSubagentDefaults", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
     public enum Metadata {
         public enum Methods {
             public static let createConversation = Connect.MethodSpec(name: "CreateConversation", service: "anima.v1.HarnessService", type: .unary)
@@ -140,6 +172,10 @@ public final class Anima_V1_HarnessServiceClient: Anima_V1_HarnessServiceClientI
             public static let listDirectories = Connect.MethodSpec(name: "ListDirectories", service: "anima.v1.HarnessService", type: .unary)
             public static let listModels = Connect.MethodSpec(name: "ListModels", service: "anima.v1.HarnessService", type: .unary)
             public static let updateQueuedInput = Connect.MethodSpec(name: "UpdateQueuedInput", service: "anima.v1.HarnessService", type: .unary)
+            public static let listSchedules = Connect.MethodSpec(name: "ListSchedules", service: "anima.v1.HarnessService", type: .unary)
+            public static let updateSchedule = Connect.MethodSpec(name: "UpdateSchedule", service: "anima.v1.HarnessService", type: .unary)
+            public static let getSubagentDefaults = Connect.MethodSpec(name: "GetSubagentDefaults", service: "anima.v1.HarnessService", type: .unary)
+            public static let updateSubagentDefaults = Connect.MethodSpec(name: "UpdateSubagentDefaults", service: "anima.v1.HarnessService", type: .unary)
         }
     }
 }

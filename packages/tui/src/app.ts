@@ -1,4 +1,4 @@
-import type { ConversationInfo } from "@anima/protocol-ts";
+import { ScheduleAction, ScheduleStatus, type ConversationInfo } from "@anima/protocol-ts";
 import { getKeybindings, HStack, isKeyRelease, isKeyRepeat, matchesKey, VStack, type TuiAltScreen } from "@earendil-works/pi-tui";
 import { ChatPane, COMMANDS } from "./chat-pane.ts";
 import { RemoteClient, type Graph } from "./client.ts";
@@ -6,6 +6,16 @@ import { Dialogs } from "./dialogs.ts";
 import { ConversationList, SidePanel, Workspace } from "./panels.ts";
 import { Sidebar, workingConversations } from "./sidebar.ts";
 import { button, clean, colors, line } from "./ui.ts";
+
+function scheduleStatus(status: ScheduleStatus): string {
+  switch (status) {
+    case ScheduleStatus.PENDING: return "Pending approval";
+    case ScheduleStatus.ACTIVE: return "Active";
+    case ScheduleStatus.CANCELLED: return "Cancelled";
+    case ScheduleStatus.FAILED: return "Failed";
+    default: return "Unknown";
+  }
+}
 
 /** Workspace navigation is separate from the conversation-bound chat controllers. */
 export class App {
@@ -193,6 +203,7 @@ export class App {
       this.main.addChild(line(colors.muted("Create a conversation to get started.")), { basis: 1 });
       this.main.addChild(button(() => colors.accent("＋ New conversation (N)"), () => void this.act(() => this.command(undefined, "new"))), { basis: 1 });
       this.main.addChild(button("Archived conversations…", () => void this.act(() => this.command(undefined, "archived"))), { basis: 1 });
+      this.main.addChild(button("Schedules…", () => void this.act(() => this.command(undefined, "schedules"))), { basis: 1 });
       this.main.addChild(line(""), { basis: 0, grow: 1 });
     }
     this.main.addChild(line(() => this.notice()), { basis: 1, shrink: 0, visible: () => Boolean(this.notice()) });
@@ -264,12 +275,50 @@ export class App {
     finally { this.refresh(); }
   }
 
+  private async schedules(dialogs: Dialogs) {
+    while (!this.stopped) {
+      const response = await dialogs.wait("Loading schedules…", signal => this.remote.rpc.listSchedules({}, { signal }));
+      if (!response) return;
+      const id = await dialogs.choose(response.schedules.length === 0 ? "Schedules · No jobs yet" : "Schedules", response.schedules.map(job => ({
+        value: job.scheduleId,
+        label: job.name,
+        description: `${scheduleStatus(job.status)} · ${job.cron} · ${job.timezone}`,
+      })));
+      const job = response.schedules.find(candidate => candidate.scheduleId === id);
+      if (!job) return;
+      const actions: { key: "a" | "c" | "o"; label: string }[] = [];
+      if (job.status === ScheduleStatus.PENDING) actions.push({ key: "a", label: "Approve and start schedule" });
+      if (job.status === ScheduleStatus.PENDING || job.status === ScheduleStatus.ACTIVE) {
+        actions.push({ key: "c", label: job.status === ScheduleStatus.PENDING ? "Reject proposal" : "Cancel future runs" });
+      }
+      if (job.conversationId && this.humans().some(info => info.conversationId === job.conversationId)) {
+        actions.push({ key: "o", label: "Open job conversation" });
+      }
+      const detail = [
+        job.name,
+        `${scheduleStatus(job.status)} · ${job.cron} · ${job.timezone}`,
+        ...(job.nextRunAt ? [`Next run (UTC): ${job.nextRunAt}`] : []),
+        ...(job.error ? [`Error: ${job.error}`] : []),
+        "", "Allowed tools:", ...(job.tools.length ? job.tools : ["None"]),
+        "", "Instruction:", job.instruction,
+      ].join("\n");
+      const choice = await dialogs.review("Schedule details", detail, actions);
+      if (!choice) return;
+      if (choice === "o" && job.conversationId) return this.selectHuman(job.conversationId);
+      const action = choice === "a" ? ScheduleAction.APPROVE : ScheduleAction.CANCEL;
+      const updated = await dialogs.wait(choice === "a" ? "Approving…" : "Cancelling…", signal =>
+        this.remote.rpc.updateSchedule({ scheduleId: job.scheduleId, action }, { signal }));
+      if (!updated) return;
+    }
+  }
+
   private async command(origin: ChatPane | undefined, name: string, argument = ""): Promise<void> {
     const dialogs = origin?.dialogs ?? this.dialogs;
     const signal = this.remote.lifetime.signal;
     if (name === "sidebar") return this.toggleLeft();
     if (name === "agents") return this.toggleAgents();
     if (name === "quit") return this.onExit();
+    if (name === "schedules") return this.schedules(dialogs);
     if (name === "resize") {
       const [side, columns] = argument.split(/\s+/);
       const width = Number(columns);
